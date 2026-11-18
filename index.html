@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booth München – DJs buchen</title>
+<meta name="description" content="DJs in München buchen, Vinyl und Tracks kaufen, DJ-Equipment und Studios mieten.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+/* Layout: club-flyer header + filter bar, then a grid of DJ "tickets"; booking happens in a side sheet. */
+:root{
+  /* one visual world: club at night. Magenta = action, amber = money/upsell */
+  --bg:#0c0a12; --surface:#16121f; --ink:#f4f1fa; --muted:#a59db5; --line:#2e2840;
+  --accent:#ff2e88; --accent-ink:#ffffff; --gold:#ffb627; --ok:#3ee08f; --warn:#ffb627;
+  --glow:0 0 0 1px rgba(255,46,136,.5), 0 10px 40px -8px rgba(255,46,136,.55);
+  --display:"Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.5}
+a{color:inherit}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+
+/* header */
+header.top{border-bottom:2px solid var(--ink)}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; flex-wrap:wrap}
+.logo{font-family:var(--display); font-weight:900; font-size:30px; letter-spacing:.02em; text-transform:uppercase; text-decoration:none; display:flex; align-items:center; gap:10px}
+.logo i{display:inline-block; width:14px; height:14px; border-radius:50%; background:var(--accent)}
+nav.tabs{display:flex; gap:4px; flex-wrap:wrap}
+nav.tabs a{text-decoration:none; padding:8px 14px; border:2px solid transparent; font-weight:600; font-size:15px}
+nav.tabs a[aria-current="page"]{border-color:var(--ink)}
+nav.tabs a .count{font-family:var(--mono); font-size:12px; background:var(--accent); color:var(--accent-ink); padding:1px 6px; margin-left:6px}
+
+.hero{display:grid; grid-template-columns:1.3fr 1fr; gap:32px; padding:36px 0 26px; align-items:end}
+.hero h1{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:clamp(48px,7vw,96px); line-height:.86; margin:0; letter-spacing:-.005em; text-wrap:balance}
+.hero h1 em{font-style:normal; color:var(--accent)}
+.hero p{margin:0; color:var(--muted); max-width:44ch; font-size:17px}
+.stats{display:flex; gap:22px; margin-top:16px; font-family:var(--mono); font-size:13px}
+.stats b{display:block; font-family:var(--display); font-size:34px; line-height:1; color:var(--ink)}
+
+/* filter */
+.filters{display:grid; grid-template-columns:repeat(4,1fr) auto; border:2px solid var(--ink); background:var(--surface); margin-bottom:22px}
+.filters label{display:flex; flex-direction:column; padding:10px 14px; border-right:1px solid var(--line); font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600}
+.filters input,.filters select{border:0; background:transparent; padding:4px 0 0; font-size:16px; text-transform:none; letter-spacing:0; color:var(--ink); font-weight:500; min-width:0}
+.filters input[type=range]{accent-color:var(--accent)}
+.filters .reset{border:0; background:transparent; padding:0 18px; cursor:pointer; font-weight:600; color:var(--muted)}
+.filters .reset:hover{color:var(--ink)}
+
+.note{font-size:14px; color:var(--muted); margin:-10px 0 18px; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.pill{display:inline-block; font-family:var(--mono); font-size:12px; padding:2px 8px; border:1px solid var(--line); background:var(--surface)}
+
+/* grid */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; padding-bottom:48px}
+.ticket{background:var(--surface); border:2px solid var(--ink); display:flex; flex-direction:column; position:relative; transition:transform .15s ease, box-shadow .15s ease}
+.ticket:hover{transform:translate(-3px,-3px); box-shadow:6px 6px 0 var(--ink)}
+.ticket .head{padding:16px 16px 12px; border-bottom:2px dashed var(--line)}
+.ticket h3{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:36px; line-height:.95; margin:0 0 4px; text-wrap:balance}
+.ticket .where{font-size:14px; color:var(--muted)}
+.chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+.chip{font-size:12px; font-weight:600; padding:3px 8px; border:1px solid var(--ink)}
+.ticket .meta{display:grid; grid-template-columns:1fr 1fr; padding:12px 16px; gap:8px; font-size:13px; color:var(--muted)}
+.ticket .meta b{display:block; font-family:var(--mono); font-size:15px; color:var(--ink); font-weight:500}
+.ticket .foot{margin-top:auto; display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:2px solid var(--ink); gap:10px}
+.price{font-family:var(--display); font-weight:900; font-size:30px; line-height:1}
+.price small{font-family:var(--body); font-size:13px; font-weight:500; color:var(--muted)}
+.avail{font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px}
+.avail::before{content:""; width:9px; height:9px; border-radius:50%; background:var(--ok)}
+.avail.no{color:var(--muted)} .avail.no::before{background:var(--line)}
+.btn{border:2px solid var(--ink); background:var(--ink); color:var(--bg); padding:9px 16px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block}
+.btn:hover{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.btn.ghost{background:transparent; color:var(--ink)}
+.btn.ghost:hover{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.btn[disabled]{opacity:.45; cursor:not-allowed}
+.empty{border:2px dashed var(--line); padding:40px; text-align:center; color:var(--muted); grid-column:1/-1}
+
+/* sheet */
+.scrim{position:fixed; inset:0; background:rgba(10,12,15,.5); opacity:0; pointer-events:none; transition:opacity .2s}
+.scrim.on{opacity:1; pointer-events:auto}
+.sheet{position:fixed; top:0; right:0; height:100%; width:min(560px,100%); background:var(--surface); border-left:2px solid var(--ink); transform:translateX(100%); transition:transform .25s ease; overflow-y:auto; z-index:5}
+.sheet.on{transform:none}
+.sheet .in{padding:22px 24px 40px; display:flex; flex-direction:column; gap:18px}
+.sheet .x{position:sticky; top:0; display:flex; justify-content:flex-end; background:var(--surface); padding:12px 16px 0}
+.sheet h2{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:56px; line-height:.9; margin:0}
+.sheet .bio{margin:0; max-width:60ch}
+.facts{display:grid; grid-template-columns:repeat(3,1fr); border:2px solid var(--ink)}
+.facts div{padding:10px 12px; border-right:1px solid var(--line); font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em}
+.facts div:last-child{border-right:0}
+.facts b{display:block; font-family:var(--mono); font-size:15px; color:var(--ink); text-transform:none; letter-spacing:0; font-weight:500}
+h4{margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+.cal{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+.cal button{border:1px solid var(--line); background:transparent; padding:6px 0; cursor:pointer; font-family:var(--mono); font-size:12px; line-height:1.3}
+.cal button span{display:block; font-family:var(--body); font-size:10px; color:var(--muted); text-transform:uppercase}
+.cal button.busy{text-decoration:line-through; color:var(--muted); cursor:not-allowed; background:repeating-linear-gradient(45deg,transparent 0 4px,var(--line) 4px 5px)}
+.cal button.sel{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.cal button.sel span{color:var(--accent-ink)}
+form.book{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+form.book .full{grid-column:1/-1}
+.field{display:flex; flex-direction:column; gap:4px; font-size:13px; font-weight:600}
+.field input,.field select,.field textarea{border:2px solid var(--line); background:var(--bg); padding:9px 10px; font-weight:400; font-size:15px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink); outline:none}
+.sum{border:2px solid var(--ink); padding:12px 14px; display:grid; gap:4px; font-size:14px}
+.sum .row{display:flex; justify-content:space-between; font-variant-numeric:tabular-nums}
+.sum .row.total{font-family:var(--display); font-weight:900; font-size:28px; border-top:2px solid var(--ink); padding-top:6px; margin-top:4px}
+.msg{font-size:14px; padding:10px 12px; border-left:4px solid var(--ok); background:var(--bg)}
+.msg.err{border-color:var(--accent)}
+
+/* requests + join */
+.view{display:none} .view.on{display:block}
+.page-h{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:clamp(44px,6vw,72px); line-height:.9; margin:32px 0 6px}
+.lead{color:var(--muted); margin:0 0 22px; max-width:62ch}
+table.req{width:100%; border-collapse:collapse; background:var(--surface); border:2px solid var(--ink); font-size:14px}
+table.req th{text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:10px 12px; border-bottom:2px solid var(--ink)}
+table.req td{padding:12px; border-bottom:1px solid var(--line); vertical-align:top}
+table.req td.num{font-family:var(--mono); white-space:nowrap}
+.tablebox{overflow-x:auto; margin-bottom:48px}
+.status{font-size:12px; font-weight:700; padding:3px 8px; border:1px solid currentColor; white-space:nowrap}
+.status.neu{color:var(--warn)} .status.angenommen{color:var(--ok)} .status.abgelehnt{color:var(--muted)}
+.acts{display:flex; gap:6px}
+.acts button{border:1px solid var(--ink); background:transparent; padding:4px 10px; cursor:pointer; font-size:13px; font-weight:600}
+.acts button:hover{background:var(--ink); color:var(--bg)}
+form.join{display:grid; grid-template-columns:1fr 1fr; gap:14px; background:var(--surface); border:2px solid var(--ink); padding:20px; margin-bottom:48px; max-width:820px}
+form.join .full{grid-column:1/-1}
+.genres{display:flex; flex-wrap:wrap; gap:6px}
+.genres label{display:flex; align-items:center; gap:6px; border:1px solid var(--line); padding:5px 10px; font-weight:500; cursor:pointer}
+.genres input{accent-color:var(--accent)}
+footer{border-top:1px solid var(--line); padding:18px 0 28px; font-size:13px; color:var(--muted)}
+
+
+/* marquee */
+.marquee{border-bottom:2px solid var(--ink); background:var(--ink); color:var(--bg); overflow:hidden; white-space:nowrap; font-family:var(--mono); font-size:13px; letter-spacing:.08em; text-transform:uppercase}
+.marquee .track{display:inline-flex; gap:28px; padding:8px 0; animation:roll 38s linear infinite}
+.marquee span b{color:var(--accent); font-weight:500}
+@keyframes roll{to{transform:translateX(-50%)}}
+/* sticky filter */
+.filters{position:sticky; top:0; z-index:3; box-shadow:0 8px 0 -6px var(--bg)}
+/* vinyl avatar */
+.vinyl{--h:12; width:64px; height:64px; border-radius:50%; flex:none; position:relative;
+  background:radial-gradient(circle at 50% 50%, var(--bg) 0 5%, hsl(var(--h) 55% 62%) 5.5% 30%, #111 31% 33%, #1d1d1d 34% 36%, #111 37% 40%, #1d1d1d 41% 44%, #111 45% 49%, #1b1b1b 50%);
+  box-shadow:inset 0 0 0 2px #000; transition:transform .6s ease}
+.vinyl span{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--display); font-weight:900; font-size:15px; color:#111; letter-spacing:.02em}
+.vinyl::after{content:""; position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 30deg, transparent 0 40deg, rgba(255,255,255,.18) 50deg, transparent 70deg 210deg, rgba(255,255,255,.12) 225deg, transparent 245deg)}
+.ticket:hover .vinyl{transform:rotate(200deg)}
+.ticket .head{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:start}
+.ticket .head .chips{grid-column:1/-1}
+.ticket .head>div:first-child{min-width:0}
+.ticket h3{overflow-wrap:break-word; hyphens:auto; font-size:32px}
+.sheet .vinyl{width:120px; height:120px}
+.sheet .vinyl span{font-size:22px}
+.sheet .who{display:flex; gap:18px; align-items:center}
+/* bpm scale */
+.bpm{grid-column:1/-1}
+.bpm .scale{position:relative; height:10px; background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 8.333%); border:1px solid var(--line); margin-top:5px}
+.bpm .scale i{position:absolute; top:-1px; bottom:-1px; background:var(--accent); min-width:4px}
+.bpm .ticks{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:3px}
+.sectionbar{display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:4px 0 14px; flex-wrap:wrap}
+.sectionbar h2{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:34px; margin:0; line-height:1}
+.sectionbar span{font-family:var(--mono); font-size:13px; color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ .marquee .track{animation:none} }
+
+
+/* club skin */
+body{background:radial-gradient(1200px 500px at 85% -10%, rgba(255,46,136,.22), transparent 60%),radial-gradient(900px 400px at -10% 10%, rgba(255,182,39,.10), transparent 60%),var(--bg); background-attachment:fixed}
+header.top,.ticket .foot,.filters,.ticket,.facts,.sum,table.req,form.join,.sheet,.sum .row.total{border-color:var(--line)!important}
+.ticket{border-radius:14px; overflow:hidden}
+.ticket:hover{transform:translateY(-4px); box-shadow:var(--glow)}
+.filters{border-radius:14px; overflow:hidden; background:rgba(22,18,31,.92); backdrop-filter:blur(8px)}
+.hero h1 em{background:linear-gradient(90deg,var(--accent),var(--gold)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.btn{background:var(--accent); border-color:var(--accent); color:#fff; border-radius:999px; padding:10px 20px}
+.btn:hover{background:var(--gold); border-color:var(--gold); color:#16121f}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink); background:transparent; color:var(--ink)}
+.chip{border-color:var(--line); border-radius:999px; background:rgba(255,255,255,.04)}
+.price{color:var(--gold)}
+nav.tabs a[aria-current="page"]{border-color:var(--accent); border-radius:999px}
+.marquee{background:linear-gradient(90deg,var(--accent),#b0218f 50%,var(--accent)); color:#fff; border:0}
+.marquee span b{color:#16121f}
+.field input,.field select,.field textarea{border-radius:10px}
+.cal button{border-radius:8px}
+.sum{border-radius:12px; background:rgba(255,182,39,.06)}
+.sum .row.total{color:var(--gold)}
+.sheet{background:#130f1b}
+.sheet .x{background:#130f1b}
+.cta{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px}
+.badge{position:absolute; top:12px; left:-34px; transform:rotate(-38deg); background:var(--gold); color:#16121f; font-weight:800; font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:4px 40px; z-index:1}
+.scarce{font-size:12px; font-weight:700; color:var(--gold); margin-top:4px}
+/* packages */
+.pkgs{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.pkg{position:relative; border:2px solid var(--line); border-radius:12px; padding:12px; cursor:pointer; display:flex; flex-direction:column; gap:4px; background:rgba(255,255,255,.02)}
+.pkg input{position:absolute; opacity:0}
+.pkg b{font-family:var(--display); font-size:22px; text-transform:uppercase; line-height:1}
+.pkg .pp{font-family:var(--mono); color:var(--gold); font-size:13px}
+.pkg small{color:var(--muted); font-size:12px; line-height:1.35}
+.pkg:has(input:checked){border-color:var(--accent); box-shadow:var(--glow)}
+.pkg:has(input:focus-visible){outline:3px solid var(--accent); outline-offset:2px}
+.pkg .pop{position:absolute; top:-10px; right:8px; background:var(--accent); color:#fff; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:999px}
+.addons{display:grid; gap:6px}
+.addons label{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; font-weight:500; font-size:14px}
+.addons label span:last-child{font-family:var(--mono); color:var(--gold)}
+.addons input{accent-color:var(--accent); margin-right:8px}
+.stickybuy{position:sticky; bottom:0; margin:0 -24px -40px; padding:12px 24px; background:rgba(19,15,27,.96); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; backdrop-filter:blur(6px)}
+.stickybuy .t{font-family:var(--display); font-weight:900; font-size:30px; color:var(--gold); line-height:1}
+.stickybuy .t small{display:block; font-family:var(--body); font-size:12px; color:var(--muted); font-weight:500}
+@media (max-width:480px){.pkgs{grid-template-columns:1fr}}
+
+
+/* shop */
+.shopbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px}
+.shopbar select{background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:9px 14px}
+.shopbar .btn{margin-left:auto}
+.seg{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden}
+.seg button{border:0; background:transparent; padding:9px 16px; cursor:pointer; font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent); color:#fff}
+.crates{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:18px; margin-bottom:40px}
+.item{background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; transition:transform .15s, box-shadow .15s}
+.item:hover{transform:translateY(-4px); box-shadow:var(--glow)}
+.cover{aspect-ratio:1; position:relative; overflow:hidden; background:linear-gradient(135deg,hsl(var(--h) 60% 45%),hsl(calc(var(--h) + 60) 70% 25%))}
+.cover .rec{position:absolute; width:78%; aspect-ratio:1; top:11%; right:-26%; border-radius:50%; background:radial-gradient(circle,hsl(var(--h) 55% 62%) 0 14%,#0b0b0b 15% 17%,#191919 18% 21%,#0b0b0b 22% 26%,#191919 27% 31%,#0b0b0b 32%); transition:right .4s ease}
+.item:hover .cover .rec{right:-34%}
+.cover .sleeve{position:absolute; inset:9% 22% 9% 7%; background:linear-gradient(160deg,hsl(var(--h) 70% 55%),hsl(calc(var(--h) + 40) 60% 30%)); box-shadow:6px 0 18px rgba(0,0,0,.45); display:flex; flex-direction:column; justify-content:flex-end; padding:10px; border-radius:3px}
+.cover .sleeve b{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:19px; hyphens:auto; line-height:.95; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); overflow-wrap:break-word}
+.cover .wave{position:absolute; inset:auto 0 0 0; height:46%; display:flex; align-items:center; gap:2px; padding:0 10px}
+.cover .wave i{flex:1; background:rgba(255,255,255,.85); border-radius:2px}
+.cover .ttl{position:absolute; top:40px; left:12px; right:12px; font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:26px; line-height:.95; color:#fff}
+.tag{position:absolute; top:10px; right:10px; font-family:var(--mono); font-size:11px; background:rgba(12,10,18,.8); color:#fff; padding:3px 8px; border-radius:999px; z-index:1}
+.item .info{padding:12px 14px; display:flex; flex-direction:column; gap:4px; flex:1}
+.item .art{color:var(--muted); font-size:14px}
+.item .row2{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px}
+.grade{font-family:var(--mono); font-size:11px; padding:2px 7px; border-radius:999px; border:1px solid var(--line)}
+.grade.top{border-color:var(--ok); color:var(--ok)}
+.item .buy{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:12px 14px; border-top:1px solid var(--line); gap:8px}
+.item .buy>span:last-child{flex-wrap:wrap}
+.field[hidden]{display:none}
+.item .buy .price{font-size:26px}
+.item.sold{opacity:.55}
+.mini{border:1px solid var(--line); border-radius:999px; background:transparent; padding:7px 12px; font-weight:700; font-size:13px; cursor:pointer; text-decoration:none; color:var(--ink)}
+.mini:hover{border-color:var(--accent); color:var(--accent)}
+.mini.hot{background:var(--accent); border-color:var(--accent); color:#fff}
+.mini.hot:hover{background:var(--gold); border-color:var(--gold); color:#16121f}
+.statusline{font-size:12px; font-weight:700}
+.statusline.reserviert{color:var(--gold)} .statusline.verkauft{color:var(--muted)}
+
+
+.real{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ok); border:1px solid var(--ok); border-radius:999px; padding:2px 8px}
+.gigs{margin:0; padding:0; list-style:none; display:grid; gap:6px}
+.gigs li{border-left:3px solid var(--accent); padding:4px 10px; background:rgba(255,255,255,.03)}
+.links{display:flex; gap:8px; flex-wrap:wrap}
+
+
+/* gear art */
+.gart{aspect-ratio:1.35; position:relative; overflow:hidden; background:linear-gradient(150deg,hsl(var(--h) 45% 22%),#0c0a12 75%); display:grid; place-items:center}
+.ctrl{width:78%; aspect-ratio:2.2; background:#1b1b1f; border:2px solid #3a3a42; border-radius:10px; position:relative; box-shadow:0 12px 24px rgba(0,0,0,.5)}
+.ctrl::before,.ctrl::after{content:""; position:absolute; top:18%; width:32%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,#555 0 18%,#222 20% 60%,#444 62% 66%,#111 68%); }
+.ctrl::before{left:5%} .ctrl::after{right:5%}
+.ctrl i{position:absolute; left:46%; width:8%; top:18%; bottom:18%; background:repeating-linear-gradient(#333 0 3px,#1b1b1f 3px 7px); border-radius:2px}
+.ctrl b{position:absolute; left:50%; bottom:10%; transform:translateX(-50%); width:18%; height:5%; background:var(--accent); border-radius:2px}
+.spk{width:44%; aspect-ratio:.7; background:#18181c; border:2px solid #34343c; border-radius:14px; display:grid; place-items:center; gap:6%; padding:8% 0; box-shadow:0 12px 24px rgba(0,0,0,.5)}
+.spk i{display:block; width:62%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,#444 0 14%,#111 16% 50%,#2a2a2a 52% 58%,#0e0e0e 60%)}
+.spk i:first-child{width:34%}
+.room{position:absolute; inset:0; background:linear-gradient(transparent 55%,rgba(255,46,136,.25)),repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 2px,transparent 2px 34px)}
+.room .desk{position:absolute; left:14%; right:14%; bottom:16%; height:18%; background:#1d1d22; border-top:3px solid var(--accent); border-radius:4px}
+.room .desk::before{content:""; position:absolute; left:12%; right:12%; top:-60%; height:60%; background:#26262c; border-radius:6px 6px 0 0}
+.room .lbl{position:absolute; top:14px; left:14px; font-family:var(--display); font-weight:900; font-size:28px; color:#fff; text-transform:uppercase; letter-spacing:.02em}
+.kind{position:absolute; top:10px; right:10px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; background:var(--accent); color:#fff; z-index:1}
+.kind.sale{background:var(--gold); color:#16121f}
+.kind.studio{background:#7c5cff}
+.dep{font-size:12px; color:var(--muted)}
+.dayrow{display:flex; gap:10px; flex-wrap:wrap}
+
+
+.terms{margin:0; padding-left:20px; display:grid; gap:8px; font-size:14px; color:var(--muted); max-width:72ch}
+.terms b{color:var(--ink)}
+details.tbox{border:1px solid var(--line); border-radius:12px; padding:10px 14px; background:rgba(255,255,255,.02)}
+details.tbox summary{cursor:pointer; font-weight:700}
+details.tbox .terms{margin-top:10px}
+.agree{display:flex; gap:8px; align-items:flex-start; font-weight:500; font-size:14px}
+.agree input{accent-color:var(--accent); margin-top:3px}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr; gap:14px}
+  .filters{grid-template-columns:1fr 1fr}
+  .filters label{border-bottom:1px solid var(--line)}
+  .filters .reset{grid-column:1/-1; padding:10px}
+}
+@media (max-width:480px){
+  form.book,form.join{grid-template-columns:1fr}
+  .facts{grid-template-columns:1fr}
+  .facts div{border-right:0; border-bottom:1px solid var(--line)}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="logo" href="#djs"><i aria-hidden="true"></i>Booth München</a>
+    <nav class="tabs" aria-label="Bereiche">
+      <a href="#djs" id="tab-djs">DJs finden</a>
+      <a href="#anfragen" id="tab-anfragen">Anfragen<span class="count" id="reqCount" hidden>0</span></a>
+      <a href="#shop" id="tab-shop">Plattenkiste</a>
+      <a href="#equipment" id="tab-equipment">Equipment &amp; Studios</a>
+      <a href="#mitmachen" id="tab-mitmachen">Als DJ mitmachen</a>
+      <button class="btn ghost" type="button" id="authBtn" style="padding:7px 16px">Anmelden</button>
+    </nav>
+  </div>
+</header>
+<div class="marquee" aria-hidden="true"><div class="track" id="mq"></div></div>
+
+<main>
+  <!-- DJs -->
+  <section class="view" id="view-djs">
+    <div class="wrap">
+      <div class="hero">
+        <h1>Der richtige Sound <em>für deine Nacht.</em></h1>
+        <div>
+          <p>DJs aus München für Clubnächte, Wohnheim-Partys, Geburtstage und Hochzeiten. Datum wählen, Genre filtern, direkt anfragen.</p>
+          <div class="stats" aria-live="polite">
+            <div><b id="sDjs">0</b>DJs</div>
+            <div><b id="sFree">0</b>frei am Datum</div>
+            <div><b id="sFrom">–</b>ab €/Std.</div>
+          </div>
+          <div class="cta"><a class="btn" href="#grid">DJ für Samstag finden</a><a class="btn ghost" href="#mitmachen">Du legst auf? Jetzt mitmachen</a></div>
+        </div>
+      </div>
+
+      <form class="filters" id="filters" onsubmit="return false">
+        <label for="fDate">Datum<input type="date" id="fDate"></label>
+        <label for="fGenre">Genre<select id="fGenre"><option value="">Alle Genres</option></select></label>
+        <label for="fEvent">Anlass<select id="fEvent"><option value="">Jeder Anlass</option></select></label>
+        <label for="fBudget">Budget bis <span id="budgetVal" style="text-transform:none;letter-spacing:0">200 €/Std.</span><input type="range" id="fBudget" min="40" max="200" step="10" value="200"></label>
+        <button class="reset" type="button" id="fReset">Zurücksetzen</button>
+      </form>
+      <p class="note" id="dataNote"><span class="pill">Lädt…</span></p>
+      <div class="sectionbar"><h2 id="secTitle">DJs</h2><span id="secSub"></span></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <!-- Requests -->
+  <section class="view" id="view-anfragen">
+    <div class="wrap">
+      <h2 class="page-h">Anfragen</h2>
+      <p class="lead" id="reqLogin">Melde dich oben rechts an, um Anfragen an dich zu sehen.</p>
+      <p class="lead">Hier siehst du nur Anfragen an dich, an deine Platten und an dein Equipment. DJs nehmen an oder lehnen ab. Angenommene Termine werden im Kalender des DJs automatisch als gebucht markiert.</p>
+      <div class="tablebox">
+        <table class="req" aria-label="Buchungsanfragen">
+          <thead><tr><th>Datum</th><th>DJ</th><th>Event</th><th>Kontakt</th><th>Preis</th><th>Status</th><th></th></tr></thead>
+          <tbody id="reqBody"></tbody>
+        </table>
+      </div>
+      <h3 class="page-h" style="font-size:40px">Miet- &amp; Studioanfragen</h3>
+      <div class="tablebox"><table class="req" aria-label="Miet- und Studioanfragen"><thead><tr><th>Angebot</th><th>Termin</th><th>Anfrage von</th><th>Preis</th><th>Status</th><th></th></tr></thead><tbody id="gearBody"></tbody></table></div>
+      <h3 class="page-h" style="font-size:40px">Kaufanfragen Plattenkiste</h3>
+      <div class="tablebox"><table class="req" aria-label="Kaufanfragen"><thead><tr><th>Artikel</th><th>Verkäufer</th><th>Käufer</th><th>Übergabe</th><th>Preis</th><th>Nachricht</th></tr></thead><tbody id="ordBody"></tbody></table></div>
+    </div>
+  </section>
+
+
+  <!-- Shop -->
+  <section class="view" id="view-shop">
+    <div class="wrap">
+      <h2 class="page-h">Platten&shy;kiste</h2>
+      <p class="lead">Vinyl aus DJ-Sammlungen und offizielle Tracks von Münchner DJs. Kaufanfrage direkt an den Verkäufer, Tracks kaufst du über den Link des DJs (Bandcamp, Beatport usw.).</p>
+      <div class="shopbar">
+        <div class="seg" role="tablist" aria-label="Art">
+          <button type="button" data-kind="" aria-pressed="true">Alles</button>
+          <button type="button" data-kind="vinyl" aria-pressed="false">Vinyl</button>
+          <button type="button" data-kind="track" aria-pressed="false">Tracks</button>
+        </div>
+        <select id="sGenre" aria-label="Genre"><option value="">Alle Genres</option></select>
+        <select id="sSort" aria-label="Sortierung"><option value="new">Neueste zuerst</option><option value="cheap">Preis aufsteigend</option><option value="pricey">Preis absteigend</option></select>
+        <a class="btn" href="#verkaufen" id="sellJump">Platte oder Track verkaufen</a>
+      </div>
+      <div class="crates" id="crates"></div>
+
+      <h3 class="page-h" id="verkaufen" style="font-size:44px;margin-top:8px">Verkaufen</h3>
+      <p class="lead">Gebrauchte Platten aus deiner Sammlung oder eigene, offizielle Releases. Bezahlung und Versand klärst du direkt mit dem Käufer.</p>
+      <form class="join" id="sellForm" novalidate>
+        <div class="field"><label for="lType">Was verkaufst du?</label><select id="lType"><option value="vinyl">Vinyl</option><option value="track">Track (digital)</option></select></div>
+        <div class="field"><label for="lDj">Verkäufer</label><select id="lDj"></select></div>
+        <div class="field"><label for="lTitle">Titel</label><input id="lTitle" maxlength="80" placeholder="z. B. Nachtschicht EP" required></div>
+        <div class="field"><label for="lArtist">Artist</label><input id="lArtist" maxlength="60" required></div>
+        <div class="field vinylOnly"><label for="lFormat">Format</label><select id="lFormat"><option>12"</option><option>LP</option><option>2×LP</option><option>7"</option></select></div>
+        <div class="field vinylOnly"><label for="lCond">Zustand (Platte)</label><select id="lCond"><option value="M">Mint (M)</option><option value="NM">Near Mint (NM)</option><option value="VG+" selected>Very Good Plus (VG+)</option><option value="VG">Very Good (VG)</option><option value="G">Good (G)</option></select></div>
+        <div class="field trackOnly" hidden><label for="lBpm">BPM / Tonart</label><input id="lBpm" maxlength="20" placeholder="128 · 8A"></div>
+        <div class="field trackOnly" hidden><label for="lLink">Link zum Kauf (Bandcamp, Beatport…)</label><input id="lLink" type="url" maxlength="200" placeholder="https://"></div>
+        <div class="field"><label for="lGenre">Genre</label><select id="lGenre"></select></div>
+        <div class="field"><label for="lPrice">Preis (€)</label><input id="lPrice" type="number" min="1" max="2000" step="0.5" value="15"></div>
+        <div class="field full"><label for="lDesc">Beschreibung</label><textarea id="lDesc" rows="2" maxlength="300" placeholder="Label, Jahr, Besonderheiten, Versand oder Abholung in München"></textarea></div>
+        <div class="field full"><label for="lContact">Kontakt für Käufer</label><input id="lContact" maxlength="80" placeholder="E-Mail oder Instagram"></div>
+        <label class="field full" style="flex-direction:row;align-items:flex-start;gap:8px;font-weight:500"><input type="checkbox" id="lRights"> <span>Die Platte gehört mir, bzw. der Track ist mein eigenes, offizielles Release und ich darf ihn verkaufen. Keine Bootlegs, keine Rips.</span></label>
+        <div class="full" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit" id="lSubmit">Anzeige veröffentlichen</button><span id="lMsg" class="lead" style="margin:0"></span></div>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- Equipment -->
+  <section class="view" id="view-equipment">
+    <div class="wrap">
+      <h2 class="page-h">Equipment &amp; Studios</h2>
+      <p class="lead">Controller, Player, Boxen und Licht mieten oder kaufen. Oder ein DJ-Studio stundenweise buchen, zum Üben auf Club-Equipment wie XDJ-RX3 oder CDJs.</p>
+      <div class="shopbar">
+        <div class="seg" id="gSeg" aria-label="Art">
+          <button type="button" data-kind="" aria-pressed="true">Alles</button>
+          <button type="button" data-kind="rent" aria-pressed="false">Mieten</button>
+          <button type="button" data-kind="sale" aria-pressed="false">Kaufen</button>
+          <button type="button" data-kind="studio" aria-pressed="false">Studios</button>
+        </div>
+        <select id="gCat" aria-label="Kategorie"><option value="">Alle Kategorien</option></select>
+        <a class="btn" href="#anbieten" id="gJump">Equipment oder Studio anbieten</a>
+      </div>
+      <div class="crates" id="gearGrid"></div>
+
+      <h3 class="page-h" id="anbieten" style="font-size:44px;margin-top:8px">Anbieten</h3>
+      <p class="lead">Vermiete dein Setup, wenn du nicht spielst, verkauf altes Equipment oder biete deinen Übungsraum an. Übergabe, Kaution und Bezahlung klärst du direkt mit dem Mieter.</p>
+      <form class="join" id="gearForm" novalidate>
+        <div class="field"><label for="gKind">Angebot</label><select id="gKind"><option value="rent">Vermieten</option><option value="sale">Verkaufen</option><option value="studio">DJ-Studio vermieten</option></select></div>
+        <div class="field"><label for="gCatIn">Kategorie</label><select id="gCatIn"></select></div>
+        <div class="field full"><label for="gTitle">Gerät oder Studio</label><input id="gTitle" maxlength="80" placeholder="z. B. Pioneer DDJ-FLX4 oder Übungsraum mit XDJ-RX3"></div>
+        <div class="field"><label for="gPrice" id="gPriceLbl">Preis pro Tag (€)</label><input id="gPrice" type="number" min="1" max="5000" step="1" value="20"></div>
+        <div class="field gRentOnly"><label for="gDeposit">Kaution (€)</label><input id="gDeposit" type="number" min="0" max="5000" step="10" value="150"></div>
+        <div class="field gSaleOnly" hidden><label for="gCond">Zustand</label><select id="gCond"><option>Neu</option><option>Wie neu</option><option selected>Gut</option><option>Gebrauchsspuren</option></select></div>
+        <div class="field"><label for="gArea">Stadtteil / Abholung</label><input id="gArea" maxlength="40" placeholder="z. B. Olympiadorf"></div>
+        <div class="field full"><label for="gIncl">Was ist dabei?</label><input id="gIncl" maxlength="160" placeholder="z. B. Kabel, USB, Kopfhörer, Tasche"></div>
+        <div class="field full"><label for="gDesc">Beschreibung</label><textarea id="gDesc" rows="2" maxlength="300"></textarea></div>
+        <div class="field full"><label for="gContact">Kontakt</label><input id="gContact" maxlength="80" placeholder="E-Mail oder Instagram"></div>
+        <label class="field full" style="flex-direction:row;align-items:flex-start;gap:8px;font-weight:500"><input type="checkbox" id="gRights"> <span>Das Equipment bzw. der Raum gehört mir oder ich darf es anbieten. Beim Vermieten gelten die <a href="#mietbedingungen">Mietbedingungen</a> von Booth München.</span></label>
+        <div class="full" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit" id="gSubmit">Angebot veröffentlichen</button><span id="gMsg" class="lead" style="margin:0"></span></div>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- Terms -->
+  <section class="view" id="view-mietbedingungen">
+    <div class="wrap">
+      <h2 class="page-h">Mietbedingungen</h2>
+      <p class="lead">Gelten für jede Miete von Equipment und DJ-Studios über Booth München, Stand 18.11.2026. Bei Abholung unterschreiben beide Seiten zusätzlich den Mietvertrag mit Übergabe-Protokoll.</p>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:48px"><div id="termsFull"></div>
+        <p style="margin:16px 0 0;font-size:13px;color:var(--muted)">Diese Bedingungen sind keine Rechtsberatung und werden vor dem öffentlichen Start rechtlich geprüft.</p>
+        <a class="btn" href="#equipment" style="margin-top:16px">Zu Equipment &amp; Studios</a>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="view" id="view-impressum"><div class="wrap"><h2 class="page-h">Impressum</h2>
+    <div class="lead" style="max-width:62ch">Angaben gemäß § 5 DDG<br><br>[Vor- und Nachname]<br>[Straße und Hausnummer]<br>[PLZ Ort]<br><br>E-Mail: [E-Mail-Adresse]<br>Telefon: [Telefonnummer]<br><br>Verantwortlich für den Inhalt: [Vor- und Nachname, Anschrift wie oben]</div></div></section>
+  <section class="view" id="view-datenschutz"><div class="wrap"><h2 class="page-h">Datenschutz</h2>
+    <div class="lead" style="max-width:62ch">[Hier deine Datenschutzerklärung einfügen, z. B. erstellt mit einem Generator wie e-recht24. Sie muss erklären: wer verantwortlich ist, welche Daten gespeichert werden (Profile, Anfragen mit Name und Kontakt, Login-E-Mail), wo sie liegen (Supabase, Rechenzentrum in Irland, EU; Hosting bei Vercel), wie lange, und welche Rechte Nutzer haben (Auskunft, Löschung, Widerspruch).]</div></div></section>
+
+  <!-- Join -->
+  <section class="view" id="view-mitmachen">
+    <div class="wrap">
+      <h2 class="page-h" id="joinTitle">Als DJ mitmachen</h2>
+      <p class="lead" id="joinLead">Jede:r DJ legt das eigene Profil selbst an: Name, Sound, Portfolio. Nur du kannst dein Profil später ändern, niemand sonst. So bleiben alle Profile echt.</p>
+      <form class="join" id="joinForm" novalidate>
+        <div class="field"><label for="jName">DJ-Name</label><input id="jName" required maxlength="40" placeholder="z. B. Isarblau"></div>
+        <div class="field"><label for="jArea">Stadtteil</label><input id="jArea" maxlength="40" placeholder="z. B. Schwabing"></div>
+        <div class="field full"><span>Genres</span><div class="genres" id="jGenres"></div></div>
+        <div class="field"><label for="jBpm">BPM-Bereich</label><input id="jBpm" maxlength="12" placeholder="122–128"></div>
+        <div class="field"><label for="jRate">Preis pro Stunde (€)</label><input id="jRate" type="number" min="20" max="500" step="5" value="70"></div>
+        <div class="field"><label for="jMin">Mindestbuchung (Std.)</label><input id="jMin" type="number" min="1" max="8" value="3"></div>
+        <div class="field"><label for="jGear">Equipment</label><select id="jGear"><option value="own">Bringe eigenes Setup mit</option><option value="venue">Nutze Anlage vor Ort</option></select></div>
+        <div class="field full"><label for="jBio">Kurzbeschreibung</label><textarea id="jBio" rows="3" maxlength="400" placeholder="Wo hast du gespielt, wie klingt dein Set?"></textarea></div>
+        <div class="field"><label for="jSince">Legst auf seit (Jahr)</label><input id="jSince" type="number" min="1980" max="2026" placeholder="2022"></div>
+        <div class="field"><label for="jInsta">Instagram</label><input id="jInsta" maxlength="40" placeholder="@deinname"></div>
+        <div class="field"><label for="jMix">Mix-Link (SoundCloud, Mixcloud…)</label><input id="jMix" type="url" maxlength="200" placeholder="https://"></div>
+        <div class="field full"><label for="jGigs">Portfolio: wo hast du gespielt? (eine Zeile pro Gig)</label><textarea id="jGigs" rows="4" maxlength="800" placeholder="Wohnheim Kieferngarten, Nov 2026&#10;Bar XY, Geburtstag, Okt 2026"></textarea></div>
+        <div class="full" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn" type="submit" id="jSubmit">Profil veröffentlichen</button><button class="btn ghost" type="button" id="jDelete" hidden>Profil löschen</button>
+          <span id="jMsg" class="lead" style="margin:0"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><a href="#mietbedingungen">Mietbedingungen</a> · <a href="#impressum">Impressum</a> · <a href="#datenschutz">Datenschutz</a> · Booth München. Zahlungen laufen nicht über die Seite, Preise sind Richtwerte der DJs.</div></footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" aria-hidden="true" aria-labelledby="shName" role="dialog">
+  <div class="x"><button class="btn ghost" id="shClose" type="button">Schließen</button></div>
+  <div class="in" id="shBody"></div>
+</aside>
+
+<script>
+const GENRES=["Techno","House","Melodic Techno","Afro House","Drum & Bass","Hip-Hop","R&B","Disco","Open Format","Arabic / Oriental","Latin","Charts"];
+const EVENTS=["Club","Wohnheim-Party","Geburtstag","Hochzeit","Firmenfeier","Bar"];
+const GEAR_FEE=80;
+const PACKAGES=[{id:"basic",name:"Basic",price:0,desc:"Nur der DJ, deine Anlage"},
+ {id:"party",name:"Party",price:149,desc:"+ LED-Licht & Nebel, Musikwunsch-Call",pop:true},
+ {id:"premium",name:"Premium",price:349,desc:"+ Licht, PA bis 150 Gäste, 1 Gratis-Stunde"}];
+const ADDONS=[{id:"mic",name:"Funkmikro für Reden & Ansagen",price:35},{id:"photo",name:"Party-Fotos (50 Bilder)",price:120},{id:"early",name:"Früher Aufbau & Soundcheck",price:40}];
+
+// Shown only when the shared database can't be reached in this view.
+const DEMO=[
+ {id:"demo-isarblau",name:"Isarblau",area:"Schwabing",genres:["Melodic Techno","House"],bpm:"120–126",rate:90,minHours:3,gear:"own",events:["Club","Bar","Geburtstag"],bio:"Warme, melodische Sets mit langen Übergängen.",busy:[],demo:true},
+ {id:"demo-kessel",name:"Mara Kessel",area:"Maxvorstadt",genres:["Techno"],bpm:"132–140",rate:110,minHours:4,gear:"venue",events:["Club"],bio:"Treibender, harter Techno für späte Stunden.",busy:[],demo:true},
+ {id:"demo-oasis",name:"Oase FM",area:"Olympiadorf",genres:["Arabic / Oriental","Afro House","Open Format"],bpm:"100–124",rate:60,minHours:2,gear:"own",events:["Wohnheim-Party","Hochzeit","Geburtstag"],bio:"Von arabischem Pop bis Afro House, mit eigenem Setup.",busy:[],demo:true}
+];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>d.toISOString().slice(0,10);
+const today=new Date(); today.setHours(12,0,0,0);
+const fmtDate=s=>{const d=new Date(s+"T12:00:00");return d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});};
+const eurc=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR",minimumFractionDigits:Number.isInteger(+n)?0:2}).format(n);
+const eur=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
+
+
+const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h;};
+const initials=n=>String(n).split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
+const vinyl=d=>`<div class="vinyl" style="--h:${hue(d.name)}" aria-hidden="true"><span>${esc(initials(d.name))}</span></div>`;
+function bpmBar(b){const m=String(b||"").match(/(\d{2,3})\D+(\d{2,3})/);if(!m)return "";const lo=60,hi=180,a=Math.max(lo,+m[1]),z=Math.min(hi,+m[2]);
+  return `<div class="bpm">BPM <b style="display:inline;font-family:var(--mono);color:var(--ink);font-weight:500">${esc(b)}</b><div class="scale"><i style="left:${(a-lo)/(hi-lo)*100}%;width:${Math.max(1,(z-a)/(hi-lo)*100)}%"></i></div><div class="ticks"><span>60</span><span>90</span><span>120</span><span>150</span><span>180</span></div></div>`;}
+const mqItems=["Techno <b>132</b>","House <b>124</b>","Afro House <b>120</b>","Drum &amp; Bass <b>174</b>","Hip-Hop <b>95</b>","Disco <b>116</b>","Arabic <b>105</b>","Latin <b>100</b>"];
+document.getElementById("mq").innerHTML=[...mqItems,...mqItems,...mqItems,...mqItems].map(x=>`<span>${x} BPM</span><span>/</span>`).join("");
+
+const SUPABASE_URL="https://gmfymorjvrqxhlqnlqzf.supabase.co";
+const SUPABASE_KEY="sb_publishable_suLdlLmilaqVMbfgq0rtbA_SMoHAfce";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let uid=null, me=null, userEmail="", busyMap={}, gearBusyMap={};
+let db=true, djs=[], bookings=[], usingDemo=false, current=null, selDate=null;
+const state={date:"",genre:"",event:"",budget:200};
+
+// ---- filters
+$("#fGenre").insertAdjacentHTML("beforeend",GENRES.map(g=>`<option>${esc(g)}</option>`).join(""));
+$("#fEvent").insertAdjacentHTML("beforeend",EVENTS.map(g=>`<option>${esc(g)}</option>`).join(""));
+$("#jGenres").innerHTML=GENRES.map((g,i)=>`<label><input type="checkbox" value="${esc(g)}" id="jg${i}">${esc(g)}</label>`).join("");
+const fDate=$("#fDate"); fDate.min=iso(today);
+function nextSaturday(){const d=new Date(today);d.setDate(d.getDate()+((6-d.getDay()+7)%7||7));return iso(d);}
+state.date=nextSaturday(); fDate.value=state.date;
+fDate.onchange=e=>{state.date=e.target.value;renderGrid();};
+$("#fGenre").onchange=e=>{state.genre=e.target.value;renderGrid();};
+$("#fEvent").onchange=e=>{state.event=e.target.value;renderGrid();};
+$("#fBudget").oninput=e=>{state.budget=+e.target.value;$("#budgetVal").textContent=state.budget>=200?"200+ €/Std.":state.budget+" €/Std.";renderGrid();};
+$("#fReset").onclick=()=>{Object.assign(state,{date:nextSaturday(),genre:"",event:"",budget:200});fDate.value=state.date;$("#fGenre").value="";$("#fEvent").value="";$("#fBudget").value=200;$("#budgetVal").textContent="200 €/Std.";renderGrid();};
+
+function busyDates(dj){
+  const set=new Set([...(dj.busy||[]),...(busyMap[dj.id]||[])]);
+  bookings.forEach(b=>{if(b.djId===dj.id&&b.status==="angenommen")set.add(b.date);});
+  return set;
+}
+function isFree(dj,date){return !date||!busyDates(dj).has(date);}
+function satList(){const out=[],d=new Date(today);d.setDate(d.getDate()+((6-d.getDay()+7)%7));for(let i=0;i<4;i++){out.push(iso(d));d.setDate(d.getDate()+7);}return out;}
+function freeSats(dj){const b=busyDates(dj);return satList().filter(x=>!b.has(x)).length;}
+let topIds=new Set();
+function computeTop(){const c={};Object.entries(busyMap).forEach(([k,v])=>{c[k]=v.length;});const arr=Object.entries(c).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]);topIds=new Set(arr);}
+
+function renderGrid(){
+  computeTop();
+  const list=djs.filter(d=>(!state.genre||(d.genres||[]).includes(state.genre))
+    &&(!state.event||(d.events||[]).includes(state.event))
+    &&(state.budget>=200||d.rate<=state.budget))
+   .sort((a,b)=>(isFree(b,state.date)-isFree(a,state.date))||a.rate-b.rate);
+  const free=list.filter(d=>isFree(d,state.date));
+  $("#sDjs").textContent=djs.length;
+  $("#sFree").textContent=free.length;
+  $("#sFrom").textContent=djs.length?Math.min(...djs.map(d=>d.rate)):"–";
+  $("#secTitle").textContent=state.genre||"Alle DJs";$("#secSub").textContent=state.date?`${free.length} von ${list.length} frei am ${fmtDate(state.date)}`:`${list.length} Profile`;
+  const g=$("#grid");
+  if(!list.length){g.innerHTML=`<div class="empty">${djs.length?"Keine DJs passen zu diesen Filtern. Erhöhe das Budget oder wähle ein anderes Genre.":"Noch keine DJs. Leg unter „Als DJ mitmachen“ das erste Profil an."}</div>`;return;}
+  g.innerHTML=list.map(d=>{
+    const free=isFree(d,state.date);
+    return `<article class="ticket">${topIds.has(d.id)?'<span class="badge">Top gebucht</span>':""}
+      <div class="head"><div><h3>${esc(d.name)}</h3><div class="where">${esc(d.area||"München")}${d.demo?' · <span class="pill">Beispiel</span>':' · <span class="real">Echtes Profil</span>'}${d.id===uid?' · <span class="pill">Du</span>':""}</div></div>${vinyl(d)}
+        <div class="chips">${(d.genres||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>
+      <div class="meta">${bpmBar(d.bpm)}<div>Mindestens<b>${esc(d.minHours||1)} Std.</b></div>
+        <div>Equipment<b>${d.gear==="own"?"eigenes":"vor Ort"}</b></div></div>
+      <div class="foot"><div><div class="price">${eur(d.rate)}<small> /Std.</small></div>
+        ${(()=>{const n=freeSats(d);return n<=2?`<div class="scarce">Nur noch ${n} ${n===1?"freier Samstag":"freie Samstage"} bis ${fmtDate(satList()[3])}</div>`:"";})()}<div class="avail ${free?"":"no"}">${state.date?(free?"frei am "+fmtDate(state.date):"gebucht am "+fmtDate(state.date)):"Datum wählen"}</div></div>
+        <button class="btn" type="button" data-open="${esc(d.id)}">Ansehen</button></div>
+    </article>`;}).join("");
+}
+$("#grid").addEventListener("click",e=>{const b=e.target.closest("[data-open]");if(b)openSheet(b.dataset.open);});
+
+// ---- sheet
+function openSheet(id){
+  current=djs.find(d=>d.id===id); if(!current)return;
+  selDate=state.date&&isFree(current,state.date)?state.date:null;
+  renderSheet();
+  $("#sheet").classList.add("on");$("#scrim").classList.add("on");$("#sheet").setAttribute("aria-hidden","false");
+  setTimeout(()=>$("#shClose").focus(),50);
+}
+function closeSheet(){$("#sheet").classList.remove("on");$("#scrim").classList.remove("on");$("#sheet").setAttribute("aria-hidden","true");current=null;}
+$("#shClose").onclick=closeSheet;
+$("#sheet").addEventListener("click",e=>{if(e.target.closest('a[href^="#"]'))closeSheet();});$("#scrim").onclick=closeSheet;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet();});
+
+function renderSheet(){
+  const d=current, busy=busyDates(d), days=[];
+  for(let i=0;i<21;i++){const x=new Date(today);x.setDate(x.getDate()+i);days.push(iso(x));}
+  $("#shBody").innerHTML=`
+   <div class="who">${vinyl(d)}<div><div class="where" style="color:var(--muted)">${esc(d.area||"München")}${d.demo?' · <span class="pill">Beispiel</span>':""}</div>
+   <h2 id="shName">${esc(d.name)}</h2></div></div>
+   <div class="chips">${(d.genres||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div>
+   <p class="bio">${esc(d.bio||"")}</p>
+   ${!d.demo?`<div><span class="real">Echtes Profil · vom DJ selbst gepflegt</span></div>`:""}
+   ${(d.gigs&&d.gigs.length)||d.since||d.insta||d.mix?`<div><h4>Portfolio${d.since?" · legt auf seit "+esc(d.since):""}</h4>
+     ${d.gigs&&d.gigs.length?`<ul class="gigs">${d.gigs.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>`:""}
+     <div class="links" style="margin-top:10px">${safeLink(d.mix)?`<a class="mini hot" href="${esc(safeLink(d.mix))}" target="_blank" rel="noopener">Mix anhören</a>`:""}${d.insta?`<a class="mini" href="https://instagram.com/${esc(String(d.insta).replace(/^@/,""))}" target="_blank" rel="noopener">${esc(d.insta.startsWith("@")?d.insta:"@"+d.insta)}</a>`:""}</div></div>`:""}
+   ${(()=>{const its=listings.filter(l=>l.djId===d.id&&l.status!=="verkauft");return its.length?`<div><h4>In der Plattenkiste</h4><div class="links">${its.map(l=>`<a class="mini" href="#shop">${esc(l.title)} · ${eurc(l.price)}</a>`).join("")}</div></div>`:"";})()}
+   <div class="facts"><div>Preis<b>${eur(d.rate)} /Std.</b></div><div>BPM<b>${esc(d.bpm||"–")}</b></div><div>Mindestens<b>${esc(d.minHours||1)} Std.</b></div></div>
+   <div><h4>Verfügbarkeit, nächste 3 Wochen</h4><div class="cal" id="cal">${days.map(s=>{const b=busy.has(s);const dt=new Date(s+"T12:00:00");
+      return `<button type="button" data-d="${s}" class="${b?"busy":""} ${s===selDate?"sel":""}" ${b?'disabled aria-label="'+fmtDate(s)+' gebucht"':""}><span>${dt.toLocaleDateString("de-DE",{weekday:"short"})}</span>${dt.getDate()}.${dt.getMonth()+1}.</button>`;}).join("")}</div></div>
+   <div><h4>Anfrage senden</h4>
+   <form class="book" id="bookForm" novalidate>
+     <div class="field"><label for="bDate">Datum</label><input type="date" id="bDate" min="${iso(today)}" value="${selDate||""}" required></div>
+     <div class="field"><label for="bStart">Beginn</label><input type="time" id="bStart" value="22:00"></div>
+     <div class="field"><label for="bHours">Dauer (Std.)</label><input type="number" id="bHours" min="${d.minHours||1}" max="12" value="${Math.max(d.minHours||1,4)}"></div>
+     <div class="field"><label for="bEvent">Anlass</label><select id="bEvent">${EVENTS.map(x=>`<option ${x===state.event?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
+     <div class="field"><label for="bGuests">Gäste (ca.)</label><input type="number" id="bGuests" min="5" max="5000" value="80"></div>
+     <div class="field"><label for="bVenue">Ort</label><input id="bVenue" maxlength="80" placeholder="z. B. Wohnheim Olydorf, Haus A"></div>
+     ${d.gear==="venue"?`<label class="field full" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="bGear"> Es gibt keine Anlage vor Ort (Equipment mieten, +${eur(GEAR_FEE)})</label>`:""}
+     <div class="field"><label for="bName">Dein Name</label><input id="bName" maxlength="60" required></div>
+     <div class="field"><label for="bContact">E-Mail oder Telefon</label><input id="bContact" maxlength="80" required></div>
+     <div class="field full"><label for="bMsg">Nachricht an den DJ</label><textarea id="bMsg" rows="3" maxlength="500" placeholder="Musikwünsche, Ablauf, Fragen"></textarea></div>
+     <div class="full"><h4>Paket wählen</h4><div class="pkgs">${PACKAGES.map(p=>`<label class="pkg">${p.pop?'<span class="pop">Beliebt</span>':""}<input type="radio" name="pkg" value="${p.id}" ${p.pop?"checked":""}><b>${p.name}</b><span class="pp">${p.price?"+"+eur(p.price):"inklusive"}</span><small>${p.desc}</small></label>`).join("")}</div></div>
+     <div class="full"><h4>Extras</h4><div class="addons">${ADDONS.map(a=>`<label><span><input type="checkbox" data-addon="${a.id}">${a.name}</span><span>+${eur(a.price)}</span></label>`).join("")}</div></div>
+     <div class="sum full" id="bSum"></div>
+     <div class="full stickybuy"><div class="t" id="bTotal">–<small>Richtpreis inkl. Paket</small></div><button class="btn" type="submit" id="bSubmit">Jetzt anfragen</button></div>
+     <div class="full" id="bOut" aria-live="polite"></div>
+   </form></div>`;
+  $("#cal").onclick=e=>{const b=e.target.closest("button[data-d]");if(!b||b.disabled)return;selDate=b.dataset.d;$("#bDate").value=selDate;
+    document.querySelectorAll("#cal button").forEach(x=>x.classList.toggle("sel",x.dataset.d===selDate));updateSum();};
+  $("#bDate").onchange=e=>{selDate=e.target.value;document.querySelectorAll("#cal button").forEach(x=>x.classList.toggle("sel",x.dataset.d===selDate));updateSum();};
+  ["bHours","bGear"].forEach(id=>{const el=document.getElementById(id);if(el)el.oninput=updateSum;});
+  $("#bookForm").addEventListener("change",e=>{if(e.target.name==="pkg"||e.target.dataset.addon)updateSum();});
+  $("#bookForm").onsubmit=submitBooking;
+  updateSum();
+}
+function calc(){
+  const d=current, h=Math.max(+$("#bHours").value||0,d.minHours||1);
+  const gear=$("#bGear")&&$("#bGear").checked?GEAR_FEE:0;
+  const pid=(document.querySelector('input[name="pkg"]:checked')||{}).value||"basic", pkg=PACKAGES.find(p=>p.id===pid);
+  const adds=ADDONS.filter(a=>{const el=document.querySelector(`[data-addon="${a.id}"]`);return el&&el.checked;});
+  const addSum=adds.reduce((t,a)=>t+a.price,0);
+  return {hours:h, fee:h*d.rate, gear, pkg, adds, addSum, total:h*d.rate+gear+pkg.price+addSum};
+}
+function updateSum(){
+  const c=calc(), date=$("#bDate").value, taken=date&&busyDates(current).has(date);
+  $("#bSum").innerHTML=`<div class="row"><span>${c.hours} Std. × ${eur(current.rate)}</span><span>${eur(c.fee)}</span></div>
+    ${c.gear?`<div class="row"><span>Equipment</span><span>${eur(c.gear)}</span></div>`:""}
+    ${c.pkg.price?`<div class="row"><span>Paket ${c.pkg.name}</span><span>${eur(c.pkg.price)}</span></div>`:""}
+    ${c.adds.map(a=>`<div class="row"><span>${a.name}</span><span>${eur(a.price)}</span></div>`).join("")}
+    ${c.pkg.id==="basic"?`<div class="row" style="color:var(--accent)"><span>Mit Party-Paket: Licht & Nebel dazu</span><span>+${eur(149)}</span></div>`:""}
+    <div class="row total"><span>Richtpreis</span><span>${eur(c.total)}</span></div>
+    ${taken?`<div class="msg err">An diesem Tag ist ${esc(current.name)} schon gebucht. Wähle einen anderen Tag.</div>`:""}`;
+  $("#bSubmit").disabled=!!taken;
+  $("#bTotal").innerHTML=`${eur(c.total)}<small>Richtpreis inkl. Paket & Extras</small>`;
+}
+async function submitBooking(e){
+  e.preventDefault();
+  const out=$("#bOut"), date=$("#bDate").value, name=$("#bName").value.trim(), contact=$("#bContact").value.trim();
+  if(!date||!name||!contact){out.innerHTML=`<div class="msg err">Bitte Datum, Name und Kontakt ausfüllen.</div>`;return;}
+  if(busyDates(current).has(date)){updateSum();return;}
+  const c=calc();
+  const rec={djId:current.id,djName:current.name,date,start:$("#bStart").value,hours:c.hours,eventType:$("#bEvent").value,
+    guests:+$("#bGuests").value||0,venue:$("#bVenue").value.trim(),name,contact,message:$("#bMsg").value.trim(),
+    gear:c.gear>0,package:c.pkg.name,addons:c.adds.map(a=>a.name),total:c.total,status:"neu",createdAt:new Date().toISOString()};
+  $("#bSubmit").disabled=true;
+  try{
+    const {error}=await sb.from("bookings").insert({dj_id:rec.djId,date:rec.date,start_time:rec.start,hours:rec.hours,event_type:rec.eventType,guests:rec.guests,venue:rec.venue,name:rec.name,contact:rec.contact,message:rec.message,gear_rental:rec.gear,package:rec.package,addons:rec.addons,total:rec.total});
+    if(error)throw error;
+    out.innerHTML=`<div class="msg">Anfrage an ${esc(current.name)} für ${fmtDate(date)} ist eingegangen. ${esc(current.name)} meldet sich bei dir unter ${esc(contact)}.</div>`;
+    $("#bookForm").querySelectorAll("input,textarea,select,button").forEach(x=>{if(x.id!=="bSubmit")x.disabled=true;});
+  }catch(err){
+    out.innerHTML=`<div class="msg err">Senden hat nicht geklappt. Versuch es gleich noch einmal.</div>`;
+    $("#bSubmit").disabled=false;
+  }
+}
+
+// ---- requests
+function renderOrders(){
+  $("#ordBody").innerHTML=orders.length?orders.map(o=>`<tr><td><b>${esc(o.title)}</b></td><td>${esc(o.seller)}</td><td>${esc(o.buyerName)}<br><span style="color:var(--muted)">${esc(o.contact)}</span></td><td>${esc(o.ship)}</td><td class="num">${eurc(o.price||0)}</td><td style="color:var(--muted)">${esc(o.message||"")}</td></tr>`).join(""):`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Noch keine Kaufanfragen.</td></tr>`;
+}
+function renderReqs(){
+  const n=bookings.filter(b=>b.status==="neu").length, cnt=$("#reqCount");
+  cnt.hidden=!n; cnt.textContent=n;
+  const rows=[...bookings].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  $("#reqBody").innerHTML=rows.length?rows.map(b=>`<tr>
+    <td class="num">${fmtDate(b.date)}<br>${esc(b.start||"")} · ${esc(b.hours)} Std.</td>
+    <td><b>${esc(b.djName)}</b></td>
+    <td>${esc(b.eventType)} · ${esc(b.guests)} Gäste${b.package?` · <b style="color:var(--gold)">${esc(b.package)}</b>`:""}<br><span style="color:var(--muted)">${esc(b.venue||"Ort offen")}</span>${b.message?`<br><span style="color:var(--muted)">„${esc(b.message)}“</span>`:""}</td>
+    <td>${esc(b.name)}<br><span style="color:var(--muted)">${esc(b.contact)}</span></td>
+    <td class="num">${eur(b.total||0)}</td>
+    <td><span class="status ${esc(b.status)}">${esc(b.status)}</span></td>
+    <td>${b.status==="neu"?`<div class="acts"><button type="button" data-st="angenommen" data-id="${esc(b.id)}">Annehmen</button><button type="button" data-st="abgelehnt" data-id="${esc(b.id)}">Ablehnen</button></div>`:""}</td>
+  </tr>`).join(""):`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">Noch keine Anfragen.</td></tr>`;
+}
+$("#reqBody").addEventListener("click",async e=>{
+  const b=e.target.closest("button[data-st]"); if(!b)return;
+  b.disabled=true;
+  const conflict=b.dataset.st==="angenommen"&&bookings.some(x=>x.id!==b.dataset.id&&x.status==="angenommen"&&x.djId===bookings.find(y=>y.id===b.dataset.id).djId&&x.date===bookings.find(y=>y.id===b.dataset.id).date);
+  if(conflict){b.closest("td").insertAdjacentHTML("beforeend",`<div class="msg err">Der DJ hat an dem Tag schon eine angenommene Buchung.</div>`);return;}
+  try{
+    const {error}=await sb.from("bookings").update({status:b.dataset.st}).eq("id",b.dataset.id); if(error)throw error;
+    await loadPrivate(); await loadPublic();
+  }catch(err){b.disabled=false;b.closest("td").insertAdjacentHTML("beforeend",`<div class="msg err">Konnte Status nicht ändern.</div>`);}
+});
+
+// ---- join
+function fillJoin(){
+  me=uid?djs.find(d=>d.id===uid):null;
+  $("#joinTitle").textContent=me?"Dein Profil":"Als DJ mitmachen";
+  $("#jSubmit").textContent=me?"Änderungen speichern":"Profil veröffentlichen";
+  $("#jDelete").hidden=!me;
+  if(!me||fillJoin.done===me.id)return; fillJoin.done=me.id;
+  $("#jName").value=me.name||"";$("#jArea").value=me.area||"";$("#jBpm").value=me.bpm||"";$("#jRate").value=me.rate||70;$("#jMin").value=me.minHours||3;
+  $("#jGear").value=me.gear||"own";$("#jBio").value=me.bio||"";$("#jSince").value=me.since||"";
+  $("#jInsta").value=me.insta||"";$("#jMix").value=me.mix||"";$("#jGigs").value=(me.gigs||[]).join("\n");
+  document.querySelectorAll("#jGenres input").forEach(x=>x.checked=(me.genres||[]).includes(x.value));
+}
+$("#joinForm").onsubmit=async e=>{
+  e.preventDefault();
+  const name=$("#jName").value.trim(), genres=[...document.querySelectorAll("#jGenres input:checked")].map(x=>x.value), msg=$("#jMsg");
+  if(!name||!genres.length){msg.textContent="Bitte DJ-Name und mindestens ein Genre angeben.";return;}
+  const mix=$("#jMix").value.trim();
+  if(mix&&!safeLink(mix)){msg.textContent="Der Mix-Link muss mit https:// beginnen.";return;}
+  const rec={name,area:$("#jArea").value.trim()||"München",genres,bpm:$("#jBpm").value.trim(),rate:Math.max(20,+$("#jRate").value||70),
+    minHours:Math.max(1,+$("#jMin").value||1),gear:$("#jGear").value,events:EVENTS.slice(),bio:$("#jBio").value.trim(),
+    since:$("#jSince").value.trim(),insta:$("#jInsta").value.trim(),mix:safeLink(mix),
+    gigs:$("#jGigs").value.split("\n").map(x=>x.trim()).filter(Boolean).slice(0,12),
+    busy:me?(me.busy||[]):[],createdAt:me?(me.createdAt||new Date().toISOString()):new Date().toISOString(),updatedAt:new Date().toISOString()};
+  $("#jSubmit").disabled=true;
+  try{
+    if(!uid){msg.textContent="Melde dich zuerst oben rechts an. Dann kannst du dein Profil anlegen.";$("#jSubmit").disabled=false;openLogin();return;}
+    const {error}=await sb.from("djs").upsert({id:uid,name:rec.name,area:rec.area,genres:rec.genres,bpm:rec.bpm,rate:rec.rate,min_hours:rec.minHours,gear:rec.gear,events:rec.events,bio:rec.bio,since:rec.since?+rec.since:null,insta:rec.insta,mix_url:rec.mix,gigs:rec.gigs,busy:rec.busy});
+    if(error)throw error; await loadPublic();
+    msg.textContent=me?"Gespeichert.":`${name} ist jetzt in der Liste.`;
+  }catch(err){msg.textContent="Speichern hat nicht geklappt: "+(err&&err.message||"unbekannter Fehler");}
+  $("#jSubmit").disabled=false;
+};
+$("#jDelete").onclick=async()=>{
+  const b=$("#jDelete");
+  if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="Wirklich löschen? Nochmal klicken";return;}
+  b.disabled=true;
+  try{const {error}=await sb.from("djs").delete().eq("id",uid);if(error)throw error;await loadPublic();fillJoin.done=null;$("#joinForm").reset();$("#jMsg").textContent="Dein Profil ist gelöscht.";}
+  catch(err){$("#jMsg").textContent="Löschen hat nicht geklappt.";}
+  b.disabled=false;b.dataset.confirm="";b.textContent="Profil löschen";
+};
+
+
+// ---- shop
+let listings=[], orders=[], shop={kind:"",genre:"",sort:"new"};
+$("#sGenre").insertAdjacentHTML("beforeend",GENRES.map(g=>`<option>${esc(g)}</option>`).join(""));
+$("#lGenre").innerHTML=GENRES.map(g=>`<option>${esc(g)}</option>`).join("");
+document.querySelector(".seg").onclick=e=>{const b=e.target.closest("button");if(!b)return;shop.kind=b.dataset.kind;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderShop();};
+$("#sGenre").onchange=e=>{shop.genre=e.target.value;renderShop();};
+$("#sSort").onchange=e=>{shop.sort=e.target.value;renderShop();};
+$("#sellJump").onclick=e=>{e.preventDefault();document.getElementById("verkaufen").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});};
+$("#lType").onchange=e=>{const v=e.target.value==="vinyl";document.querySelectorAll(".vinylOnly").forEach(x=>x.hidden=!v);document.querySelectorAll(".trackOnly").forEach(x=>x.hidden=v);};
+function fillSellerSelect(){const mine=uid?djs.find(d=>d.id===uid):(usingDemo?null:null);$("#lDj").innerHTML=`<option value="">Privat (kein DJ-Profil)</option>`+(mine?`<option value="${esc(mine.id)}" selected>${esc(mine.name)} (dein Profil)</option>`:"");fillJoin();}
+function waveBars(seed){let h=hue(seed),out="";for(let i=0;i<32;i++){h=(h*73+19)%997;out+=`<i style="height:${20+h%80}%"></i>`;}return out;}
+function safeLink(u){try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:"";}catch(e){return "";}}
+function renderShop(){
+  let list=listings.filter(l=>(!shop.kind||l.type===shop.kind)&&(!shop.genre||l.genre===shop.genre));
+  list.sort((a,b)=>shop.sort==="cheap"?a.price-b.price:shop.sort==="pricey"?b.price-a.price:(b.createdAt||"").localeCompare(a.createdAt||""));
+  list.sort((a,b)=>(a.status==="verkauft")-(b.status==="verkauft"));
+  const c=$("#crates");
+  if(!list.length){c.innerHTML=`<div class="empty">${listings.length?"Nichts in dieser Auswahl.":"Noch keine Anzeigen. Verkauf unten die erste Platte."}</div>`;return;}
+  c.innerHTML=list.map(l=>{
+    const h=hue(l.title+l.artist), vinyl=l.type==="vinyl", link=safeLink(l.link), sold=l.status==="verkauft";
+    return `<article class="item ${sold?"sold":""}">
+      <div class="cover" style="--h:${h}">
+        <span class="tag">${vinyl?esc(l.format||"Vinyl"):"Digital"}${l.demo?" · Beispiel":""}</span>
+        ${vinyl?`<div class="rec"></div><div class="sleeve"><b>${esc(l.title)}</b></div>`:`<div class="ttl">${esc(l.title)}</div><div class="wave" aria-hidden="true">${waveBars(l.title)}</div>`}
+      </div>
+      <div class="info"><b>${esc(l.title)}</b><span class="art">${esc(l.artist)}${l.djName&&l.djName!==l.artist?" · verkauft von "+esc(l.djName):""}</span>
+        <div class="row2"><span class="grade">${esc(l.genre||"")}</span>${vinyl?`<span class="grade ${["M","NM"].includes(l.condition)?"top":""}">${esc(l.condition||"")}</span>`:(l.bpm?`<span class="grade">${esc(l.bpm)}</span>`:"")}</div>
+        ${l.desc?`<span class="art" style="font-size:13px">${esc(l.desc)}</span>`:""}
+        ${l.status&&l.status!=="verfügbar"?`<span class="statusline ${esc(l.status)}">${esc(l.status)}</span>`:""}
+      </div>
+      <div class="buy"><span class="price">${eurc(l.price)}</span>
+        <span style="display:flex;gap:6px">${!vinyl&&link?`<a class="mini hot" href="${esc(link)}" target="_blank" rel="noopener">Kaufen</a>`:""}
+        ${!sold?`<button type="button" class="mini ${vinyl?"hot":""}" data-ask="${esc(l.id)}">${vinyl?"Anfragen":"Frage"}</button>`:""}
+        ${canManage(l)?`<button type="button" class="mini" data-mark="${esc(l.id)}">${l.status==="verfügbar"||!l.status?"Reservieren":l.status==="reserviert"?"Verkauft":"Wieder frei"}</button>`:""}</span></div>
+    </article>`;}).join("");
+}
+function canManage(l){return !!uid&&l.ownerId===uid;}
+$("#crates").addEventListener("click",async e=>{
+  const ask=e.target.closest("[data-ask]"), mark=e.target.closest("[data-mark]");
+  if(ask){openOrder(listings.find(x=>x.id===ask.dataset.ask));}
+  if(mark){const l=listings.find(x=>x.id===mark.dataset.mark);const next=!l.status||l.status==="verfügbar"?"reserviert":l.status==="reserviert"?"verkauft":"verfügbar";
+    mark.disabled=true;
+    try{const {error}=await sb.from("listings").update({status:next}).eq("id",l.id);if(error)throw error;await loadPublic();}catch(err){mark.disabled=false;}}
+});
+function openOrder(l){
+  if(!l)return; current=null;
+  const vinyl=l.type==="vinyl", link=safeLink(l.link);
+  $("#shBody").innerHTML=`<div><div class="where" style="color:var(--muted)">${vinyl?esc(l.format||"Vinyl")+" · Zustand "+esc(l.condition||""):"Digitaler Track"}</div><h2 id="shName">${esc(l.title)}</h2><p class="bio">${esc(l.artist)}${l.djName?" · verkauft von "+esc(l.djName):""}</p></div>
+   ${l.desc?`<p class="bio">${esc(l.desc)}</p>`:""}
+   <div class="facts"><div>Preis<b>${eurc(l.price)}</b></div><div>Genre<b>${esc(l.genre||"–")}</b></div><div>${vinyl?"Zustand":"BPM / Key"}<b>${esc(vinyl?l.condition:(l.bpm||"–"))}</b></div></div>
+   ${!vinyl&&link?`<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Track beim DJ kaufen</a>`:""}
+   <form class="book" id="orderForm" novalidate>
+     <div class="field"><label for="oName">Dein Name</label><input id="oName" maxlength="60" required></div>
+     <div class="field"><label for="oContact">E-Mail oder Telefon</label><input id="oContact" maxlength="80" required></div>
+     ${vinyl?`<div class="field full"><label for="oShip">Übergabe</label><select id="oShip"><option>Abholung in München</option><option>Versand (+ ca. 6 €)</option></select></div>`:""}
+     <div class="field full"><label for="oMsg">Nachricht an den Verkäufer</label><textarea id="oMsg" rows="3" maxlength="400" placeholder="${vinyl?"Fragen zum Zustand, Preisvorschlag, Abholtermin":"Frage zum Track, Lizenz für dein Set…"}"></textarea></div>
+     <div class="full stickybuy"><div class="t">${eurc(l.price)}<small>${vinyl?"zzgl. ggf. Versand":"Kauf über den Link des DJs"}</small></div><button class="btn" type="submit">${vinyl?"Kaufanfrage senden":"Nachricht senden"}</button></div>
+     <div class="full" id="oOut" aria-live="polite"></div>
+   </form>`;
+  $("#orderForm").onsubmit=async ev=>{ev.preventDefault();
+    const name=$("#oName").value.trim(), contact=$("#oContact").value.trim(), out=$("#oOut");
+    if(!name||!contact){out.innerHTML=`<div class="msg err">Bitte Name und Kontakt angeben.</div>`;return;}
+    const rec={listingId:l.id,title:l.title,seller:l.djName||"Privat",buyerName:name,contact,ship:$("#oShip")?$("#oShip").value:"digital",message:$("#oMsg").value.trim(),price:l.price,status:"neu",createdAt:new Date().toISOString()};
+    try{ const {error}=await sb.from("orders").insert({listing_id:rec.listingId,buyer_name:rec.buyerName,contact:rec.contact,ship:rec.ship,message:rec.message}); if(error)throw error;
+      out.innerHTML=`<div class="msg">Anfrage für „${esc(l.title)}“ ist beim Verkäufer. Er meldet sich bei dir unter ${esc(contact)}.</div>`;
+      ev.target.querySelectorAll("input,select,textarea,button").forEach(x=>x.disabled=true);
+    }catch(err){out.innerHTML=`<div class="msg err">Senden hat nicht geklappt. Versuch es gleich noch einmal.</div>`;}
+  };
+  $("#sheet").classList.add("on");$("#scrim").classList.add("on");$("#sheet").setAttribute("aria-hidden","false");
+}
+$("#sellForm").onsubmit=async e=>{
+  e.preventDefault(); const msg=$("#lMsg");
+  const type=$("#lType").value, title=$("#lTitle").value.trim(), artist=$("#lArtist").value.trim();
+  if(!title||!artist){msg.textContent="Bitte Titel und Artist angeben.";return;}
+  if(!$("#lRights").checked){msg.textContent="Bitte bestätige, dass du die Platte oder den Track verkaufen darfst.";return;}
+  const link=safeLink($("#lLink").value.trim());
+  if(type==="track"&&!link){msg.textContent="Für Tracks brauchst du einen Kauf-Link (https://…).";return;}
+  const djId=$("#lDj").value, dj=djs.find(d=>d.id===djId);
+  const rec={type,title,artist,djId:djId||"",djName:dj?dj.name:"",genre:$("#lGenre").value,price:Math.max(1,+$("#lPrice").value||1),
+    format:type==="vinyl"?$("#lFormat").value:"",condition:type==="vinyl"?$("#lCond").value:"",bpm:type==="track"?$("#lBpm").value.trim():"",link:type==="track"?link:"",
+    desc:$("#lDesc").value.trim(),contact:$("#lContact").value.trim(),status:"verfügbar",createdAt:new Date().toISOString()};
+  $("#lSubmit").disabled=true;
+  if(!uid){msg.textContent="Melde dich zuerst oben rechts an, um zu verkaufen.";$("#lSubmit").disabled=false;openLogin();return;}
+  try{ const {error}=await sb.from("listings").insert({type:rec.type,title:rec.title,artist:rec.artist,genre:rec.genre,price:rec.price,format:rec.format,condition:rec.condition,bpm:rec.bpm,link:rec.link,description:rec.desc}); if(error)throw error; await loadPublic();
+    msg.textContent=`„${title}“ ist jetzt in der Plattenkiste.`; e.target.reset(); $("#lType").dispatchEvent(new Event("change"));
+    window.scrollTo({top:0,behavior:"auto"});
+  }catch(err){msg.textContent=err&&err.code==="invalid_argument"?"Du hast hier nur Leserechte.":"Speichern hat nicht geklappt.";}
+  $("#lSubmit").disabled=false;
+};
+
+
+// ---- equipment & studios
+const TERMS_VERSION="2026-11-18";
+const TERMS_HTML=`<ol class="terms">
+<li><b>Vertrag.</b> Der Mietvertrag kommt direkt zwischen Vermieter und Mieter zustande. Booth München vermittelt nur den Kontakt und ist nicht Vertragspartei.</li>
+<li><b>Übergabe.</b> Bei Abholung zeigt der Mieter einen Lichtbildausweis. Beide prüfen die Geräte gemeinsam, machen Fotos und füllen das Übergabe-Protokoll aus. Vorhandene Mängel werden dort notiert.</li>
+<li><b>Bezahlung und Kaution.</b> Miete und Kaution werden bei Abholung bezahlt. Die Kaution kommt bei vollständiger Rückgabe ohne neue Schäden sofort zurück.</li>
+<li><b>Rückgabe.</b> Wer zu spät zurückgibt, zahlt für jeden angefangenen Tag die volle Tagesmiete, im Studio jede angefangene Stunde.</li>
+<li><b>Stornierung.</b> Bei Absage weniger als 48 Stunden vor Abholung kann der Vermieter 50 % der Miete verlangen.</li>
+<li><b>Sorgfalt.</b> Geräte vor Getränken, Regen, Hitze und Diebstahl schützen, auf Events nicht unbeaufsichtigt lassen, nicht an Dritte weitergeben, nicht öffnen und keine Firmware dauerhaft ändern.</li>
+<li><b>Schäden und Verlust.</b> Der Mieter haftet für Schäden und Verlust während der Mietzeit, außer bei normaler Abnutzung. Reparaturkosten werden zuerst mit der Kaution verrechnet. Bei Verlust oder Totalschaden zahlt der Mieter den Zeitwert, höchstens den Neuwert. Diebstahl meldet der Mieter der Polizei und gibt dem Vermieter eine Kopie der Anzeige.</li>
+<li><b>Haftung des Vermieters.</b> Der Vermieter versichert, dass die Geräte bei Übergabe funktionieren. Für ein von Anfang an defektes Gerät fällt keine Miete an. Für Folgeschäden, z. B. einen ausgefallenen Auftritt, haftet er nur bei Vorsatz oder grober Fahrlässigkeit.</li>
+<li><b>Studios.</b> Pünktlich und aufgeräumt zurückgeben, kein Essen oder Trinken am DJ-Pult, nicht rauchen, Hausordnung und Ruhezeiten einhalten, keine eigene Software auf Studio-Geräten installieren.</li>
+<li><b>Schriftform.</b> Änderungen gelten nur schriftlich, auch per E-Mail oder Messenger. Ist eine Regel unwirksam, bleiben die übrigen gültig.</li>
+</ol>`;
+const GEAR_CATS=["DJ-Controller","CDJ / Player","Mixer","All-in-One (z. B. XDJ-RX3)","Lautsprecher","Licht","Kopfhörer","DJ-Studio"];
+let gear=[], gearReqs=[], gview={kind:"",cat:""};
+document.getElementById("termsFull").innerHTML=TERMS_HTML;
+$("#gCat").insertAdjacentHTML("beforeend",GEAR_CATS.map(c=>`<option>${esc(c)}</option>`).join(""));
+$("#gCatIn").innerHTML=GEAR_CATS.map(c=>`<option>${esc(c)}</option>`).join("");
+$("#gSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;gview.kind=b.dataset.kind;document.querySelectorAll("#gSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderGear();};
+$("#gCat").onchange=e=>{gview.cat=e.target.value;renderGear();};
+$("#gJump").onclick=e=>{e.preventDefault();document.getElementById("anbieten").scrollIntoView();};
+$("#gKind").onchange=e=>{const k=e.target.value;
+  $("#gPriceLbl").textContent=k==="rent"?"Preis pro Tag (€)":k==="studio"?"Preis pro Stunde (€)":"Preis (€)";
+  document.querySelectorAll(".gRentOnly").forEach(x=>x.hidden=k==="sale");document.querySelectorAll(".gSaleOnly").forEach(x=>x.hidden=k!=="sale");
+  if(k==="studio")$("#gCatIn").value="DJ-Studio";};
+const unit=g=>g.kind==="rent"?"/Tag":g.kind==="studio"?"/Std.":"";
+function gearArt(g){
+  const h=hue(g.title), c=g.category||"";
+  let art;
+  if(g.kind==="studio"||c==="DJ-Studio") art=`<div class="room"><div class="lbl">Studio</div><div class="desk"></div></div>`;
+  else if(c==="Lautsprecher") art=`<div class="spk"><i></i><i></i></div>`;
+  else art=`<div class="ctrl"><i></i><b></b></div>`;
+  return `<div class="gart" style="--h:${h}"><span class="kind ${esc(g.kind)}">${g.kind==="rent"?"Mieten":g.kind==="sale"?"Kaufen":"Studio"}</span>${art}</div>`;
+}
+function gearBusy(g){return new Set(gearBusyMap[g.id]||[]);}
+function studioBusy(g,date){return (gearBusyMap[g.id]||[]).filter(d=>d===date);}
+function renderGear(){
+  const list=gear.filter(g=>(!gview.kind||g.kind===gview.kind)&&(!gview.cat||g.category===gview.cat)).sort((a,b)=>(a.status==="verkauft")-(b.status==="verkauft")||(b.createdAt||"").localeCompare(a.createdAt||""));
+  const el=$("#gearGrid");
+  if(!list.length){el.innerHTML=`<div class="empty">${gear.length?"Nichts in dieser Auswahl.":"Noch keine Angebote. Biete unten dein Equipment an."}</div>`;return;}
+  el.innerHTML=list.map(g=>`<article class="item ${g.status==="verkauft"?"sold":""}">${gearArt(g)}
+     <div class="info"><b>${esc(g.title)}</b><span class="art">${esc(g.category||"")} · ${esc(g.area||"München")}${g.demo?' · <span class="pill">Beispiel</span>':""}</span>
+       ${g.incl?`<span class="art" style="font-size:13px">Dabei: ${esc(g.incl)}</span>`:""}
+       <div class="row2">${g.kind!=="sale"&&g.deposit?`<span class="grade">Kaution ${eur(g.deposit)}</span>`:""}${g.kind==="sale"&&g.condition?`<span class="grade ${g.condition==="Neu"||g.condition==="Wie neu"?"top":""}">${esc(g.condition)}</span>`:""}</div>
+       ${g.status&&g.status!=="verfügbar"?`<span class="statusline ${esc(g.status)}">${esc(g.status)}</span>`:""}</div>
+     <div class="buy"><span class="price">${eurc(g.price)}<small style="font-family:var(--body);font-size:13px;color:var(--muted)"> ${unit(g)}</small></span>
+       ${g.status!=="verkauft"?`<button type="button" class="mini hot" data-gear="${esc(g.id)}">${g.kind==="rent"?"Mieten":g.kind==="studio"?"Buchen":"Anfragen"}</button>`:""}</div>
+   </article>`).join("");
+}
+$("#gearGrid").addEventListener("click",e=>{const b=e.target.closest("[data-gear]");if(b)openGear(gear.find(x=>x.id===b.dataset.gear));});
+function openGear(g){
+  if(!g)return; current=null;
+  const days=[];for(let i=0;i<21;i++){const x=new Date(today);x.setDate(x.getDate()+i);days.push(iso(x));}
+  const busy=gearBusy(g);
+  const picks=new Set();
+  $("#shBody").innerHTML=`<div><div class="where" style="color:var(--muted)">${esc(g.category||"")} · ${esc(g.area||"München")}</div><h2 id="shName">${esc(g.title)}</h2></div>
+   ${g.desc?`<p class="bio">${esc(g.desc)}</p>`:""}
+   <div class="facts"><div>Preis<b>${eurc(g.price)} ${unit(g)}</b></div><div>${g.kind==="sale"?"Zustand":"Kaution"}<b>${g.kind==="sale"?esc(g.condition||"–"):eur(g.deposit||0)}</b></div><div>Dabei<b style="font-family:var(--body);font-size:13px">${esc(g.incl||"–")}</b></div></div>
+   ${g.kind==="rent"?`<div><h4>Miettage wählen (mehrere möglich)</h4><div class="cal" id="gcal">${days.map(s=>{const b=busy.has(s),dt=new Date(s+"T12:00:00");return `<button type="button" data-d="${s}" class="${b?"busy":""}" ${b?"disabled":""}><span>${dt.toLocaleDateString("de-DE",{weekday:"short"})}</span>${dt.getDate()}.${dt.getMonth()+1}.</button>`;}).join("")}</div></div>`:""}
+   <form class="book" id="gForm" novalidate>
+     ${g.kind==="studio"?`<div class="field"><label for="gD">Datum</label><input type="date" id="gD" min="${iso(today)}"></div><div class="field"><label for="gS">Beginn</label><input type="time" id="gS" value="18:00" step="3600"></div><div class="field"><label for="gH">Stunden</label><input type="number" id="gH" min="1" max="10" value="2"></div><div class="field"></div>`:""}
+     <div class="field"><label for="gN">Dein Name</label><input id="gN" maxlength="60" required></div>
+     <div class="field"><label for="gC">E-Mail oder Telefon</label><input id="gC" maxlength="80" required></div>
+     <div class="field full"><label for="gM">Nachricht</label><textarea id="gM" rows="2" maxlength="400" placeholder="${g.kind==="sale"?"Preisvorschlag, Abholung":"Abholzeit, Fragen"}"></textarea></div>
+     ${g.kind!=="sale"?`<details class="tbox full"><summary>Mietbedingungen lesen</summary>${TERMS_HTML}</details>
+     <label class="agree full"><input type="checkbox" id="gAgree"> <span>Ich habe die <a href="#mietbedingungen">Mietbedingungen</a> gelesen und akzeptiere sie. Bei Abholung unterschreiben beide den Mietvertrag mit Übergabe-Protokoll.</span></label>`:""}
+     <div class="sum full" id="gSum"></div>
+     <div class="full stickybuy"><div class="t" id="gTot">–</div><button class="btn" type="submit" id="gGo">${g.kind==="rent"?"Mietanfrage senden":g.kind==="studio"?"Studio anfragen":"Kaufanfrage senden"}</button></div>
+     <div class="full" id="gOut" aria-live="polite"></div>
+   </form>`;
+  function sum(){
+    let base=0,label="";
+    if(g.kind==="rent"){base=picks.size*g.price;label=`${picks.size} ${picks.size===1?"Tag":"Tage"} × ${eurc(g.price)}`;}
+    else if(g.kind==="studio"){const h=Math.max(1,+$("#gH").value||1);base=h*g.price;label=`${h} Std. × ${eurc(g.price)}`;
+      const clash=$("#gD").value&&studioBusy(g,$("#gD").value).length;label+=clash?` <span style="color:var(--gold)">(an dem Tag schon ${clash} Buchung${clash>1?"en":""})</span>`:"";}
+    else {base=g.price;label="Kaufpreis";}
+    const dep=g.kind==="sale"?0:(g.deposit||0);
+    $("#gSum").innerHTML=`<div class="row"><span>${label}</span><span>${eurc(base)}</span></div>${dep?`<div class="row"><span>Kaution (zurück bei Rückgabe)</span><span>${eur(dep)}</span></div>`:""}<div class="row total"><span>Gesamt</span><span>${eurc(base+dep)}</span></div>`;
+    $("#gTot").innerHTML=`${eurc(base)}<small>${dep?"+ "+eur(dep)+" Kaution":g.kind==="sale"?"Kaufpreis":"Richtpreis"}</small>`;
+    $("#gGo").disabled=g.kind==="rent"&&!picks.size;
+    return {base,dep};
+  }
+  if($("#gcal"))$("#gcal").onclick=e=>{const b=e.target.closest("button[data-d]");if(!b||b.disabled)return;const d=b.dataset.d;picks.has(d)?picks.delete(d):picks.add(d);b.classList.toggle("sel",picks.has(d));sum();};
+  ["gH","gD"].forEach(id=>{const el=document.getElementById(id);if(el)el.oninput=sum;});
+  sum();
+  $("#gForm").onsubmit=async ev=>{ev.preventDefault();const out=$("#gOut"),n=$("#gN").value.trim(),c=$("#gC").value.trim();
+    if(!n||!c){out.innerHTML=`<div class="msg err">Bitte Name und Kontakt angeben.</div>`;return;}
+    if(g.kind==="studio"&&!$("#gD").value){out.innerHTML=`<div class="msg err">Bitte ein Datum wählen.</div>`;return;}
+    if(g.kind!=="sale"&&!$("#gAgree").checked){out.innerHTML=`<div class="msg err">Bitte akzeptiere die Mietbedingungen.</div>`;$("#gAgree").focus();return;}
+    const t=sum();
+    const rec={gearId:g.id,title:g.title,kind:g.kind,days:[...picks].sort(),date:g.kind==="studio"?$("#gD").value:"",start:g.kind==="studio"?$("#gS").value:"",hours:g.kind==="studio"?+$("#gH").value:0,
+      name:n,contact:c,message:$("#gM").value.trim(),termsAccepted:g.kind!=="sale",termsVersion:g.kind!=="sale"?TERMS_VERSION:"",total:t.base,deposit:t.dep,status:"neu",createdAt:new Date().toISOString()};
+    try{ const {error}=await sb.from("gear_requests").insert({gear_id:rec.gearId,days:rec.days,date:rec.date||null,start_time:rec.start||null,hours:rec.hours||null,name:rec.name,contact:rec.contact,message:rec.message,total:rec.total,deposit:rec.deposit,terms_accepted:!!rec.termsAccepted,terms_version:rec.termsVersion}); if(error)throw error;
+      out.innerHTML=`<div class="msg">Anfrage für „${esc(g.title)}“ ist raus. Der Anbieter meldet sich unter ${esc(c)}.</div>`;
+      ev.target.querySelectorAll("input,textarea,button").forEach(x=>x.disabled=true);
+    }catch(err){out.innerHTML=`<div class="msg err">Senden hat nicht geklappt.</div>`;}
+  };
+  $("#sheet").classList.add("on");$("#scrim").classList.add("on");$("#sheet").setAttribute("aria-hidden","false");
+}
+function renderGearReqs(){
+  const rows=[...gearReqs].sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+  $("#gearBody").innerHTML=rows.length?rows.map(r=>`<tr><td><b>${esc(r.title)}</b><br><span style="color:var(--muted)">${r.kind==="rent"?"Miete":r.kind==="studio"?"Studio":"Kauf"}</span></td>
+    <td class="num">${r.kind==="rent"?(r.days||[]).map(fmtDate).join("<br>"):r.kind==="studio"?fmtDate(r.date)+"<br>"+esc(r.start)+" · "+esc(r.hours)+" Std.":"–"}</td>
+    <td>${esc(r.name)}<br><span style="color:var(--muted)">${esc(r.contact)}</span></td><td class="num">${eurc(r.total||0)}${r.deposit?"<br><span style='color:var(--muted)'>+"+eur(r.deposit)+" Kaution</span>":""}</td>
+    <td><span class="status ${esc(r.status)}">${esc(r.status)}</span>${r.termsAccepted?`<br><span style="font-size:12px;color:var(--ok)">Bedingungen akzeptiert</span>`:""}</td>
+    <td>${r.status==="neu"?`<div class="acts"><button type="button" data-gst="angenommen" data-id="${esc(r.id)}">Annehmen</button><button type="button" data-gst="abgelehnt" data-id="${esc(r.id)}">Ablehnen</button></div>`:""}</td></tr>`).join("")
+    :`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Noch keine Miet- oder Studioanfragen.</td></tr>`;
+}
+$("#gearBody")||0;
+document.addEventListener("click",async e=>{const b=e.target.closest("button[data-gst]");if(!b)return;b.disabled=true;
+  try{const {error}=await sb.from("gear_requests").update({status:b.dataset.gst}).eq("id",b.dataset.id);if(error)throw error;await loadPrivate();await loadPublic();}catch(err){b.disabled=false;}});
+$("#gearForm").onsubmit=async e=>{e.preventDefault();const m=$("#gMsg"),k=$("#gKind").value,t=$("#gTitle").value.trim();
+  if(!t){m.textContent="Bitte Gerät oder Studio angeben.";return;}
+  if(!$("#gRights").checked){m.textContent="Bitte bestätige, dass du es anbieten darfst.";return;}
+  const rec={kind:k,category:k==="studio"?"DJ-Studio":$("#gCatIn").value,title:t,price:Math.max(1,+$("#gPrice").value||1),deposit:k==="sale"?0:Math.max(0,+$("#gDeposit").value||0),
+    condition:k==="sale"?$("#gCond").value:"",area:$("#gArea").value.trim()||"München",incl:$("#gIncl").value.trim(),desc:$("#gDesc").value.trim(),contact:$("#gContact").value.trim(),
+    ownerDj:uid&&djs.find(d=>d.id===uid)?djs.find(d=>d.id===uid).name:"",status:"verfügbar",createdAt:new Date().toISOString()};
+  $("#gSubmit").disabled=true;
+  if(!uid){m.textContent="Melde dich zuerst oben rechts an, um etwas anzubieten.";$("#gSubmit").disabled=false;openLogin();return;}
+  try{const {error}=await sb.from("gear").insert({kind:rec.kind,category:rec.category,title:rec.title,price:rec.price,deposit:rec.deposit,condition:rec.condition,area:rec.area,included:rec.incl,description:rec.desc});if(error)throw error;await loadPublic();
+    m.textContent=`„${t}“ ist online.`;e.target.reset();$("#gKind").dispatchEvent(new Event("change"));window.scrollTo({top:0});
+  }catch(err){m.textContent="Speichern hat nicht geklappt.";}
+  $("#gSubmit").disabled=false;};
+
+// ---- routing
+function route(){
+  const v=(location.hash||"#djs").slice(1), name=["djs","anfragen","mitmachen","shop","equipment","mietbedingungen","impressum","datenschutz"].includes(v)?v:(v==="verkaufen"?"shop":v==="anbieten"?"equipment":"djs");
+  document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="view-"+name));
+  document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.id==="tab-"+name)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+}
+window.addEventListener("hashchange",route); route();
+
+// ---- data (Supabase)
+const mapDj=r=>({id:r.id,name:r.name,area:r.area,genres:r.genres||[],bpm:r.bpm,rate:+r.rate,minHours:r.min_hours,gear:r.gear,events:r.events||[],bio:r.bio,since:r.since,insta:r.insta,mix:r.mix_url,gigs:r.gigs||[],busy:r.busy||[],createdAt:r.created_at});
+const djName=id=>{const d=djs.find(x=>x.id===id);return d?d.name:"";};
+async function loadPublic(){
+  const [a,b,c,d,e]=await Promise.all([
+    sb.from("djs").select("*"),
+    sb.from("dj_busy_days").select("*"),
+    sb.from("listings").select("*").order("created_at",{ascending:false}),
+    sb.from("gear").select("*").order("created_at",{ascending:false}),
+    sb.from("gear_busy_days").select("*")]);
+  if(a.error){$("#dataNote").innerHTML=`<span class="pill">Fehler</span> Daten konnten nicht geladen werden. Lade die Seite neu.`;return;}
+  djs=a.data.map(mapDj);
+  busyMap={}; (b.data||[]).forEach(r=>{(busyMap[r.dj_id]=busyMap[r.dj_id]||[]).push(r.date);});
+  listings=(c.data||[]).map(r=>({id:r.id,ownerId:r.owner_id,type:r.type,title:r.title,artist:r.artist,genre:r.genre,price:+r.price,format:r.format,condition:r.condition,bpm:r.bpm,link:r.link,desc:r.description,status:r.status,createdAt:r.created_at,djId:r.owner_id,djName:djName(r.owner_id)}));
+  gear=(d.data||[]).map(r=>({id:r.id,ownerId:r.owner_id,kind:r.kind,category:r.category,title:r.title,price:+r.price,deposit:+r.deposit,condition:r.condition,area:r.area,incl:r.included,desc:r.description,status:r.status,createdAt:r.created_at,ownerDj:djName(r.owner_id)}));
+  gearBusyMap={}; (e.data||[]).forEach(r=>{(gearBusyMap[r.gear_id]=gearBusyMap[r.gear_id]||[]).push(r.day);});
+  $("#dataNote").innerHTML=`<span class="pill">Live</span> ${djs.length} DJs aus München.`;
+  renderGrid(); renderShop(); renderGear(); fillSellerSelect();
+  if(current){current=djs.find(x=>x.id===current.id)||current;}
+}
+async function loadPrivate(){
+  if(!uid){bookings=[];orders=[];gearReqs=[];}
+  else{
+    const [a,b,c]=await Promise.all([
+      sb.from("bookings").select("*").order("date"),
+      sb.from("orders").select("*").order("created_at",{ascending:false}),
+      sb.from("gear_requests").select("*").order("created_at",{ascending:false})]);
+    bookings=(a.data||[]).map(r=>({id:r.id,djId:r.dj_id,djName:djName(r.dj_id),date:r.date,start:r.start_time,hours:r.hours,eventType:r.event_type,guests:r.guests,venue:r.venue,package:r.package,total:+r.total,name:r.name,contact:r.contact,message:r.message,status:r.status}));
+    orders=(b.data||[]).map(r=>{const l=listings.find(x=>x.id===r.listing_id)||{};return {id:r.id,title:l.title||"",seller:l.djName||"Du",buyerName:r.buyer_name,contact:r.contact,ship:r.ship,message:r.message,price:l.price||0};});
+    gearReqs=(c.data||[]).map(r=>{const g=gear.find(x=>x.id===r.gear_id)||{};return {id:r.id,gearId:r.gear_id,title:g.title||"",kind:g.kind,days:r.days||[],date:r.date,start:r.start_time,hours:r.hours,name:r.name,contact:r.contact,message:r.message,total:+r.total,deposit:+r.deposit,termsAccepted:r.terms_accepted,status:r.status};});
+  }
+  renderReqs(); renderOrders(); renderGearReqs();
+  $("#reqLogin").hidden=!!uid;
+}
+// ---- login
+function openLogin(){
+  current=null;
+  $("#shBody").innerHTML=uid?`<h2 id="shName">Angemeldet</h2><p class="bio">${esc(userEmail)}</p><p class="bio" style="color:var(--muted)">Dein Profil, deine Anzeigen und Anfragen an dich siehst du jetzt.</p><button class="btn ghost" type="button" id="logoutBtn">Abmelden</button>`
+   :`<h2 id="shName">Anmelden</h2><p class="bio">Gib deine E-Mail ein. Du bekommst einen Link, mit dem du dich ohne Passwort anmeldest.</p>
+     <form class="book" id="loginForm" novalidate><div class="field full"><label for="loginMail">E-Mail</label><input id="loginMail" type="email" autocomplete="email" required></div>
+     <div class="full"><button class="btn" type="submit">Login-Link senden</button></div><div class="full" id="loginOut" aria-live="polite"></div></form>`;
+  $("#sheet").classList.add("on");$("#scrim").classList.add("on");$("#sheet").setAttribute("aria-hidden","false");
+  const lf=$("#loginForm");
+  if(lf)lf.onsubmit=async e=>{e.preventDefault();const mail=$("#loginMail").value.trim(),out=$("#loginOut");
+    if(!/^\S+@\S+\.\S+$/.test(mail)){out.innerHTML=`<div class="msg err">Bitte eine gültige E-Mail eingeben.</div>`;return;}
+    const {error}=await sb.auth.signInWithOtp({email:mail,options:{emailRedirectTo:location.origin+location.pathname}});
+    out.innerHTML=error?`<div class="msg err">Das hat nicht geklappt: ${esc(error.message)}</div>`:`<div class="msg">Check dein Postfach (${esc(mail)}) und klick auf den Link.</div>`;};
+  const lo=$("#logoutBtn"); if(lo)lo.onclick=async()=>{await sb.auth.signOut();closeSheet();};
+}
+$("#authBtn").onclick=openLogin;
+async function applySession(session){
+  uid=session?session.user.id:null; userEmail=session?session.user.email:"";
+  $("#authBtn").textContent=uid?"Mein Konto":"Anmelden";
+  fillJoin.done=null; await loadPublic(); await loadPrivate();
+}
+sb.auth.onAuthStateChange((_ev,session)=>{applySession(session);});
+renderGrid(); renderReqs(); renderShop(); renderOrders(); renderGear(); renderGearReqs();
+sb.auth.getSession().then(({data})=>applySession(data.session));
+</script>
+</body>
+</html>
