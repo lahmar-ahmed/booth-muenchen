@@ -283,6 +283,59 @@ details.tbox .terms{margin-top:10px}
 .agree{display:flex; gap:8px; align-items:flex-start; font-weight:500; font-size:14px}
 .agree input{accent-color:var(--accent); margin-top:3px}
 
+
+.avatar{width:64px; height:64px; border-radius:50%; flex:none; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 0 4px #111, 0 0 0 5px var(--line)}
+.sheet .avatar{width:120px; height:120px}
+.photoPick{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+.photoPick img,.photoPick .ph{width:84px; height:84px; border-radius:50%; object-fit:cover; border:2px dashed var(--line); display:grid; place-items:center; color:var(--muted); font-size:12px; text-align:center}
+.photoPick img{border:3px solid var(--accent)}
+
+/* clarity & discovery */
+.tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:0 0 26px}
+.tile{position:relative; display:flex; flex-direction:column; gap:6px; padding:18px; border-radius:16px; text-decoration:none; overflow:hidden; border:1px solid var(--line); background:var(--surface); min-height:132px; transition:transform .18s ease, box-shadow .18s ease, border-color .18s}
+.tile:hover{transform:translateY(-4px); box-shadow:var(--glow); border-color:var(--accent)}
+.tile b{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:30px; line-height:.95}
+.tile span{color:var(--muted); font-size:14px; max-width:24ch}
+.tile .go{margin-top:auto; font-weight:700; font-size:14px; color:var(--accent)}
+.tile::after{content:""; position:absolute; right:-30px; bottom:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, var(--tc) 0, transparent 70%); opacity:.55}
+.tile .n{position:absolute; top:14px; right:16px; font-family:var(--mono); font-size:12px; color:var(--muted)}
+.gchips{display:flex; gap:8px; overflow-x:auto; padding:2px 0 14px; margin-bottom:4px; scrollbar-width:none}
+.gchips::-webkit-scrollbar{display:none}
+.gchips button{flex:none; border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:8px 14px; font-weight:600; cursor:pointer; white-space:nowrap}
+.gchips button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+.gchips button:hover{border-color:var(--ink)}
+.rowsec{margin:34px 0 0}
+.rowsec .sectionbar a{color:var(--accent); font-weight:700; text-decoration:none; font-size:14px}
+.rail{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(200px,230px); gap:14px; overflow-x:auto; padding:4px 2px 16px; scroll-snap-type:x mandatory}
+.rail>*{scroll-snap-align:start}
+.rail .empty{grid-column:auto; min-width:280px}
+.how{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:38px 0 10px}
+.how div{border:1px solid var(--line); border-radius:16px; padding:18px; background:rgba(255,255,255,.02)}
+.how i{font-style:normal; font-family:var(--display); font-weight:900; font-size:44px; line-height:1; color:var(--accent)}
+.how b{display:block; margin:6px 0 4px; font-size:17px}
+.how span{color:var(--muted); font-size:14px}
+.band{margin:34px 0 50px; border-radius:20px; padding:28px; display:flex; justify-content:space-between; align-items:center; gap:18px; flex-wrap:wrap;
+  background:linear-gradient(120deg, rgba(255,46,136,.25), rgba(255,182,39,.12)), var(--surface); border:1px solid var(--line)}
+.band h3{font-family:var(--display); font-weight:900; text-transform:uppercase; font-size:40px; line-height:.95; margin:0}
+.band p{margin:6px 0 0; color:var(--muted)}
+.eq{display:inline-flex; gap:2px; align-items:flex-end; height:16px; margin-left:2px}
+.eq span{width:3px; background:var(--accent); border-radius:1px; animation:eq 1s ease-in-out infinite}
+.eq span:nth-child(2){animation-delay:.2s} .eq span:nth-child(3){animation-delay:.4s} .eq span:nth-child(4){animation-delay:.1s}
+@keyframes eq{0%,100%{height:30%}50%{height:100%}}
+.logo i{display:none}
+.bottomnav{display:none}
+@media (max-width:860px){
+  .tiles{grid-template-columns:1fr 1fr}
+  .how{grid-template-columns:1fr}
+  nav.tabs a{display:none}
+  .bottomnav{display:grid; grid-template-columns:repeat(5,1fr); position:fixed; left:0; right:0; bottom:0; z-index:4; background:rgba(12,10,18,.96); border-top:1px solid var(--line); backdrop-filter:blur(8px); padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .bottomnav a{text-decoration:none; text-align:center; font-size:11px; font-weight:600; color:var(--muted); padding:6px 2px; display:flex; flex-direction:column; align-items:center; gap:3px}
+  .bottomnav a[aria-current="page"]{color:var(--accent)}
+  .bottomnav svg{width:22px; height:22px}
+  body{padding-bottom:70px}
+}
+@media (prefers-reduced-motion: reduce){.eq span{animation:none; height:60%}}
+
 @media (max-width:860px){
   .hero{grid-template-columns:1fr; gap:14px}
   .filters{grid-template-columns:1fr 1fr}
@@ -300,7 +353,7 @@ details.tbox .terms{margin-top:10px}
 <body>
 <header class="top">
   <div class="wrap bar">
-    <a class="logo" href="#djs"><i aria-hidden="true"></i>Booth München</a>
+    <a class="logo" href="#djs"><span class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span></span>Booth München</a>
     <nav class="tabs" aria-label="Bereiche">
       <a href="#djs" id="tab-djs">DJs finden</a>
       <a href="#anfragen" id="tab-anfragen">Anfragen<span class="count" id="reqCount" hidden>0</span></a>
@@ -330,6 +383,12 @@ details.tbox .terms{margin-top:10px}
         </div>
       </div>
 
+      <nav class="tiles" aria-label="Was möchtest du tun?">
+        <a class="tile" href="#grid" style="--tc:#ff2e88"><span class="n" id="tN1"></span><b>DJ buchen</b><span>Für Club, Party, Geburtstag oder Hochzeit</span><span class="go">DJs ansehen →</span></a>
+        <a class="tile" href="#shop" style="--tc:#ffb627"><span class="n" id="tN2"></span><b>Platten&shy;kiste</b><span>Vinyl und Tracks direkt von DJs</span><span class="go">Stöbern →</span></a>
+        <a class="tile" href="#equipment" style="--tc:#3ee08f"><span class="n" id="tN3"></span><b>Equipment</b><span>Controller, Boxen, Licht mieten oder kaufen</span><span class="go">Mieten →</span></a>
+        <a class="tile" href="#equipment" data-studio="1" style="--tc:#7c5cff"><span class="n" id="tN4"></span><b>Studio</b><span>Üben auf Club-Equipment, stundenweise</span><span class="go">Studio buchen →</span></a>
+      </nav>
       <form class="filters" id="filters" onsubmit="return false">
         <label for="fDate">Datum<input type="date" id="fDate"></label>
         <label for="fGenre">Genre<select id="fGenre"><option value="">Alle Genres</option></select></label>
@@ -339,7 +398,16 @@ details.tbox .terms{margin-top:10px}
       </form>
       <p class="note" id="dataNote"><span class="pill">Lädt…</span></p>
       <div class="sectionbar"><h2 id="secTitle">DJs</h2><span id="secSub"></span></div>
+      <div class="gchips" id="gchips" role="toolbar" aria-label="Genre schnell wählen"></div>
       <div class="grid" id="grid"></div>
+      <section class="rowsec" aria-labelledby="hShop"><div class="sectionbar"><h2 id="hShop">Neu in der Plattenkiste</h2><a href="#shop">Alle ansehen →</a></div><div class="rail" id="railShop"></div></section>
+      <section class="rowsec" aria-labelledby="hGear"><div class="sectionbar"><h2 id="hGear">Equipment &amp; Studios</h2><a href="#equipment">Alle ansehen →</a></div><div class="rail" id="railGear"></div></section>
+      <div class="how">
+        <div><i>1</i><b>Finden</b><span>Datum wählen und nach Genre, Anlass und Budget filtern. Du siehst sofort, wer frei ist.</span></div>
+        <div><i>2</i><b>Anfragen</b><span>Paket wählen, Preis sehen, Anfrage senden. Ohne Konto, ohne Vorkasse.</span></div>
+        <div><i>3</i><b>Feiern</b><span>Der DJ meldet sich direkt bei dir. Ihr klärt die Details und los geht's.</span></div>
+      </div>
+      <div class="band"><div><h3>Du legst auf?</h3><p>Leg dein Profil mit Foto an, zeig deine Gigs und bekomm Anfragen aus München.</p></div><a class="btn" href="#mitmachen">Kostenlos mitmachen</a></div>
     </div>
   </section>
 
@@ -463,6 +531,8 @@ details.tbox .terms{margin-top:10px}
       <h2 class="page-h" id="joinTitle">Als DJ mitmachen</h2>
       <p class="lead" id="joinLead">Jede:r DJ legt das eigene Profil selbst an: Name, Sound, Portfolio. Nur du kannst dein Profil später ändern, niemand sonst. So bleiben alle Profile echt.</p>
       <form class="join" id="joinForm" novalidate>
+        <div class="field full"><span>Profilfoto</span><div class="photoPick"><span class="ph" id="jPhotoPrev">Kein Foto</span>
+          <div style="display:flex;flex-direction:column;gap:6px"><input type="file" id="jPhoto" accept="image/jpeg,image/png,image/webp"><small style="color:var(--muted);font-weight:400">Ein Foto von dir, gut erkennbar, ohne andere Personen. JPG oder PNG.</small></div></div></div>
         <div class="field"><label for="jName">DJ-Name</label><input id="jName" required maxlength="40" placeholder="z. B. Isarblau"></div>
         <div class="field"><label for="jArea">Stadtteil</label><input id="jArea" maxlength="40" placeholder="z. B. Schwabing"></div>
         <div class="field full"><span>Genres</span><div class="genres" id="jGenres"></div></div>
@@ -486,6 +556,7 @@ details.tbox .terms{margin-top:10px}
 
 <footer><div class="wrap"><a href="#mietbedingungen">Mietbedingungen</a> · <a href="#impressum">Impressum</a> · <a href="#datenschutz">Datenschutz</a> · Booth München. Zahlungen laufen nicht über die Seite, Preise sind Richtwerte der DJs.</div></footer>
 
+<nav class="bottomnav" aria-label="Navigation"><a href="#djs" data-bn="djs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 6a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>DJs</a><a href="#shop" data-bn="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 7V5h8v2" fill="none" stroke="currentColor" stroke-width="2"/></svg>Platten</a><a href="#equipment" data-bn="equipment"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>Equipment</a><a href="#anfragen" data-bn="anfragen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>Anfragen</a><a href="#mitmachen" data-bn="mitmachen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg>Profil</a></nav>
 <div class="scrim" id="scrim"></div>
 <aside class="sheet" id="sheet" aria-hidden="true" aria-labelledby="shName" role="dialog">
   <div class="x"><button class="btn ghost" id="shClose" type="button">Schließen</button></div>
@@ -519,6 +590,7 @@ const eur=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR",maxi
 
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h;};
 const initials=n=>String(n).split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
+const face=d=>d.photo?`<img class="avatar" src="${esc(d.photo)}" alt="Foto von ${esc(d.name)}" loading="lazy">`:vinyl(d);
 const vinyl=d=>`<div class="vinyl" style="--h:${hue(d.name)}" aria-hidden="true"><span>${esc(initials(d.name))}</span></div>`;
 function bpmBar(b){const m=String(b||"").match(/(\d{2,3})\D+(\d{2,3})/);if(!m)return "";const lo=60,hi=180,a=Math.max(lo,+m[1]),z=Math.min(hi,+m[2]);
   return `<div class="bpm">BPM <b style="display:inline;font-family:var(--mono);color:var(--ink);font-weight:500">${esc(b)}</b><div class="scale"><i style="left:${(a-lo)/(hi-lo)*100}%;width:${Math.max(1,(z-a)/(hi-lo)*100)}%"></i></div><div class="ticks"><span>60</span><span>90</span><span>120</span><span>150</span><span>180</span></div></div>`;}
@@ -558,6 +630,7 @@ function computeTop(){const c={};Object.entries(busyMap).forEach(([k,v])=>{c[k]=
 
 function renderGrid(){
   computeTop();
+  if(document.getElementById("gchips"))document.querySelectorAll("#gchips button").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.g||"")===state.genre)));
   const list=djs.filter(d=>(!state.genre||(d.genres||[]).includes(state.genre))
     &&(!state.event||(d.events||[]).includes(state.event))
     &&(state.budget>=200||d.rate<=state.budget))
@@ -568,11 +641,11 @@ function renderGrid(){
   $("#sFrom").textContent=djs.length?Math.min(...djs.map(d=>d.rate)):"–";
   $("#secTitle").textContent=state.genre||"Alle DJs";$("#secSub").textContent=state.date?`${free.length} von ${list.length} frei am ${fmtDate(state.date)}`:`${list.length} Profile`;
   const g=$("#grid");
-  if(!list.length){g.innerHTML=`<div class="empty">${djs.length?"Keine DJs passen zu diesen Filtern. Erhöhe das Budget oder wähle ein anderes Genre.":"Noch keine DJs. Leg unter „Als DJ mitmachen“ das erste Profil an."}</div>`;return;}
+  if(!list.length){g.innerHTML=`<div class="empty">${djs.length?"Keine DJs passen zu diesen Filtern. Erhöhe das Budget oder wähle ein anderes Genre.":`Noch keine DJs. <a href="#mitmachen" style="color:var(--accent);font-weight:700">Sei der erste DJ auf Booth München →</a>`}</div>`;return;}
   g.innerHTML=list.map(d=>{
     const free=isFree(d,state.date);
     return `<article class="ticket">${topIds.has(d.id)?'<span class="badge">Top gebucht</span>':""}
-      <div class="head"><div><h3>${esc(d.name)}</h3><div class="where">${esc(d.area||"München")}${d.demo?' · <span class="pill">Beispiel</span>':' · <span class="real">Echtes Profil</span>'}${d.id===uid?' · <span class="pill">Du</span>':""}</div></div>${vinyl(d)}
+      <div class="head"><div><h3>${esc(d.name)}</h3><div class="where">${esc(d.area||"München")}${d.demo?' · <span class="pill">Beispiel</span>':' · <span class="real">Echtes Profil</span>'}${d.id===uid?' · <span class="pill">Du</span>':""}</div></div>${face(d)}
         <div class="chips">${(d.genres||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>
       <div class="meta">${bpmBar(d.bpm)}<div>Mindestens<b>${esc(d.minHours||1)} Std.</b></div>
         <div>Equipment<b>${d.gear==="own"?"eigenes":"vor Ort"}</b></div></div>
@@ -600,7 +673,7 @@ function renderSheet(){
   const d=current, busy=busyDates(d), days=[];
   for(let i=0;i<21;i++){const x=new Date(today);x.setDate(x.getDate()+i);days.push(iso(x));}
   $("#shBody").innerHTML=`
-   <div class="who">${vinyl(d)}<div><div class="where" style="color:var(--muted)">${esc(d.area||"München")}${d.demo?' · <span class="pill">Beispiel</span>':""}</div>
+   <div class="who">${face(d)}<div><div class="where" style="color:var(--muted)">${esc(d.area||"München")}${d.demo?' · <span class="pill">Beispiel</span>':""}</div>
    <h2 id="shName">${esc(d.name)}</h2></div></div>
    <div class="chips">${(d.genres||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div>
    <p class="bio">${esc(d.bio||"")}</p>
@@ -709,6 +782,14 @@ $("#reqBody").addEventListener("click",async e=>{
 });
 
 // ---- join
+let photoBlob=null;
+function setPrev(url){const el=$("#jPhotoPrev");if(!el)return;if(url){el.outerHTML=`<img id="jPhotoPrev" src="${esc(url)}" alt="Vorschau Profilfoto">`;}else{el.outerHTML=`<span class="ph" id="jPhotoPrev">Kein Foto</span>`;}}
+function squareJpeg(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const n=Math.min(img.width,img.height),c=document.createElement("canvas");c.width=c.height=600;
+  c.getContext("2d").drawImage(img,(img.width-n)/2,(img.height-n)/2,n,n,0,0,600,600);c.toBlob(b=>b?res(b):rej(new Error("Bild konnte nicht verarbeitet werden")),"image/jpeg",.85);URL.revokeObjectURL(img.src);};
+  img.onerror=()=>rej(new Error("Das ist kein gültiges Bild"));img.src=URL.createObjectURL(file);});}
+$("#jPhoto").onchange=async e=>{const f=e.target.files[0];photoBlob=null;if(!f)return;
+  if(f.size>15*1024*1024){$("#jMsg").textContent="Das Foto ist zu groß (max. 15 MB).";return;}
+  try{photoBlob=await squareJpeg(f);setPrev(URL.createObjectURL(photoBlob));$("#jMsg").textContent="";}catch(err){$("#jMsg").textContent=err.message;}};
 function fillJoin(){
   me=uid?djs.find(d=>d.id===uid):null;
   $("#joinTitle").textContent=me?"Dein Profil":"Als DJ mitmachen";
@@ -719,6 +800,7 @@ function fillJoin(){
   $("#jGear").value=me.gear||"own";$("#jBio").value=me.bio||"";$("#jSince").value=me.since||"";
   $("#jInsta").value=me.insta||"";$("#jMix").value=me.mix||"";$("#jGigs").value=(me.gigs||[]).join("\n");
   document.querySelectorAll("#jGenres input").forEach(x=>x.checked=(me.genres||[]).includes(x.value));
+  setPrev(me.photo||"");
 }
 $("#joinForm").onsubmit=async e=>{
   e.preventDefault();
@@ -734,7 +816,12 @@ $("#joinForm").onsubmit=async e=>{
   $("#jSubmit").disabled=true;
   try{
     if(!uid){msg.textContent="Melde dich zuerst oben rechts an. Dann kannst du dein Profil anlegen.";$("#jSubmit").disabled=false;openLogin();return;}
-    const {error}=await sb.from("djs").upsert({id:uid,name:rec.name,area:rec.area,genres:rec.genres,bpm:rec.bpm,rate:rec.rate,min_hours:rec.minHours,gear:rec.gear,events:rec.events,bio:rec.bio,since:rec.since?+rec.since:null,insta:rec.insta,mix_url:rec.mix,gigs:rec.gigs,busy:rec.busy});
+    let photo_url=me?me.photo||null:null;
+    if(photoBlob){const path=uid+"/avatar.jpg";
+      const up=await sb.storage.from("avatars").upload(path,photoBlob,{upsert:true,contentType:"image/jpeg",cacheControl:"3600"});
+      if(up.error)throw up.error;
+      photo_url=sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+"?v="+Date.now(); photoBlob=null;}
+    const {error}=await sb.from("djs").upsert({id:uid,photo_url,name:rec.name,area:rec.area,genres:rec.genres,bpm:rec.bpm,rate:rec.rate,min_hours:rec.minHours,gear:rec.gear,events:rec.events,bio:rec.bio,since:rec.since?+rec.since:null,insta:rec.insta,mix_url:rec.mix,gigs:rec.gigs,busy:rec.busy});
     if(error)throw error; await loadPublic();
     msg.textContent=me?"Gespeichert.":`${name} ist jetzt in der Liste.`;
   }catch(err){msg.textContent="Speichern hat nicht geklappt: "+(err&&err.message||"unbekannter Fehler");}
@@ -744,7 +831,7 @@ $("#jDelete").onclick=async()=>{
   const b=$("#jDelete");
   if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="Wirklich löschen? Nochmal klicken";return;}
   b.disabled=true;
-  try{const {error}=await sb.from("djs").delete().eq("id",uid);if(error)throw error;await loadPublic();fillJoin.done=null;$("#joinForm").reset();$("#jMsg").textContent="Dein Profil ist gelöscht.";}
+  try{await sb.storage.from("avatars").remove([uid+"/avatar.jpg"]);const {error}=await sb.from("djs").delete().eq("id",uid);if(error)throw error;await loadPublic();fillJoin.done=null;$("#joinForm").reset();setPrev("");$("#jMsg").textContent="Dein Profil ist gelöscht.";}
   catch(err){$("#jMsg").textContent="Löschen hat nicht geklappt.";}
   b.disabled=false;b.dataset.confirm="";b.textContent="Profil löschen";
 };
@@ -966,16 +1053,39 @@ $("#gearForm").onsubmit=async e=>{e.preventDefault();const m=$("#gMsg"),k=$("#gK
   }catch(err){m.textContent="Speichern hat nicht geklappt.";}
   $("#gSubmit").disabled=false;};
 
+// ---- discovery
+function renderChips(){
+  const used=GENRES.filter(g=>djs.some(d=>(d.genres||[]).includes(g)));
+  const list=used.length?used:GENRES.slice(0,8);
+  $("#gchips").innerHTML=[`<button type="button" data-g="" aria-pressed="${!state.genre}">Alle</button>`,...list.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${state.genre===g}">${esc(g)}</button>`)].join("");
+}
+$("#gchips").onclick=e=>{const b=e.target.closest("button");if(!b)return;state.genre=b.dataset.g;$("#fGenre").value=state.genre;renderGrid();};
+function renderRails(){
+  const ls=listings.filter(l=>l.status!=="verkauft").slice(0,8), gs=gear.filter(g=>g.status!=="verkauft").slice(0,8);
+  const keepS=$("#crates").innerHTML, keepG=$("#gearGrid").innerHTML;
+  // reuse card markup from the full lists
+  const sv=listings; listings=ls; renderShop(); $("#railShop").innerHTML=ls.length?$("#crates").innerHTML:`<div class="empty">Noch keine Platten. <a href="#verkaufen">Verkauf die erste</a></div>`; listings=sv; renderShop();
+  const gv=gear; gear=gs; renderGear(); $("#railGear").innerHTML=gs.length?$("#gearGrid").innerHTML:`<div class="empty">Noch kein Equipment. <a href="#anbieten">Biete deins an</a></div>`; gear=gv; renderGear();
+  $("#tN1").textContent=djs.length?djs.length+" DJs":"";
+  $("#tN2").textContent=listings.length?listings.length+" Anzeigen":"";
+  $("#tN3").textContent=gear.filter(g=>g.kind!=="studio").length?gear.filter(g=>g.kind!=="studio").length+" Angebote":"";
+  $("#tN4").textContent=gear.filter(g=>g.kind==="studio").length?gear.filter(g=>g.kind==="studio").length+" Studios":"";
+}
+document.getElementById("railShop").addEventListener("click",e=>{const a=e.target.closest("[data-ask]");if(a)openOrder(listings.find(x=>x.id===a.dataset.ask));});
+document.getElementById("railGear").addEventListener("click",e=>{const b=e.target.closest("[data-gear]");if(b)openGear(gear.find(x=>x.id===b.dataset.gear));});
+document.querySelector('.tile[data-studio]').addEventListener("click",()=>{setTimeout(()=>{const b=document.querySelector('#gSeg button[data-kind="studio"]');if(b)b.click();},50);});
 // ---- routing
 function route(){
   const v=(location.hash||"#djs").slice(1), name=["djs","anfragen","mitmachen","shop","equipment","mietbedingungen","impressum","datenschutz"].includes(v)?v:(v==="verkaufen"?"shop":v==="anbieten"?"equipment":"djs");
   document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="view-"+name));
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.id==="tab-"+name)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  document.querySelectorAll(".bottomnav a").forEach(a=>{if(a.dataset.bn===name)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  if(name!=="djs"||v==="djs")window.scrollTo({top:0});
 }
 window.addEventListener("hashchange",route); route();
 
 // ---- data (Supabase)
-const mapDj=r=>({id:r.id,name:r.name,area:r.area,genres:r.genres||[],bpm:r.bpm,rate:+r.rate,minHours:r.min_hours,gear:r.gear,events:r.events||[],bio:r.bio,since:r.since,insta:r.insta,mix:r.mix_url,gigs:r.gigs||[],busy:r.busy||[],createdAt:r.created_at});
+const mapDj=r=>({id:r.id,name:r.name,area:r.area,genres:r.genres||[],bpm:r.bpm,rate:+r.rate,minHours:r.min_hours,gear:r.gear,events:r.events||[],bio:r.bio,since:r.since,insta:r.insta,mix:r.mix_url,gigs:r.gigs||[],busy:r.busy||[],photo:r.photo_url||"",createdAt:r.created_at});
 const djName=id=>{const d=djs.find(x=>x.id===id);return d?d.name:"";};
 async function loadPublic(){
   const [a,b,c,d,e]=await Promise.all([
@@ -991,7 +1101,7 @@ async function loadPublic(){
   gear=(d.data||[]).map(r=>({id:r.id,ownerId:r.owner_id,kind:r.kind,category:r.category,title:r.title,price:+r.price,deposit:+r.deposit,condition:r.condition,area:r.area,incl:r.included,desc:r.description,status:r.status,createdAt:r.created_at,ownerDj:djName(r.owner_id)}));
   gearBusyMap={}; (e.data||[]).forEach(r=>{(gearBusyMap[r.gear_id]=gearBusyMap[r.gear_id]||[]).push(r.day);});
   $("#dataNote").innerHTML=`<span class="pill">Live</span> ${djs.length} DJs aus München.`;
-  renderGrid(); renderShop(); renderGear(); fillSellerSelect();
+  renderGrid(); renderShop(); renderGear(); renderChips(); renderRails(); fillSellerSelect();
   if(current){current=djs.find(x=>x.id===current.id)||current;}
 }
 async function loadPrivate(){
